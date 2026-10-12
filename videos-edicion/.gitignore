@@ -1,0 +1,13 @@
+# Los videos pesan mucho: no se suben al repositorio
+material/*
+exportados/*
+!material/.gitkeep
+!exportados/.gitkeep
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.wav
+*.mp3
+.venv/
+__pycache__/
