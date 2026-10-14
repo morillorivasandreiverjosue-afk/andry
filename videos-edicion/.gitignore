@@ -11,3 +11,6 @@ exportados/*
 *.mp3
 .venv/
 __pycache__/
+# Archivos generados del documental de Bolívar
+proyectos/bolivar/build/
+proyectos/bolivar/voz/
