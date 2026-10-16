@@ -1,0 +1,25 @@
+{
+ "_comentario": "Sonidos de ambiente generados con ElevenLabs (flow vV7lKiYQ8b556hhgSVml). nodo -> archivo en build/ambientes/<nombre>.mp3",
+ "nodos": {
+  "batalla": "pzrD11aLFnh9zVHy6bmK", "victoria": "ad1tHNcwY7cw9F48DaJh", "andes": "SKPXetuAajo0aV70IIi4",
+  "mar": "doSNLigHx519vGbgfdgr", "mar_noche": "DNSFvlLcxvpOmNGZmIwn", "playa": "5uetcdNmshrAGF8PFZcS",
+  "llanos": "f0X8dQ0ZY3KtIC03QYfK", "noche": "06O4bRI5ZDDPgHkl56V0", "rio": "ljDNOpmIqb9Ay5t6UgM8",
+  "ciudad": "WHGYT0jAUSeV25VaSLzc", "campamento": "sfItQKdHqmWbsFAfBQBa", "tormenta": "xtAHfDaApiivB47MGzdS",
+  "vela": "HmJsD0lweUD6BBnNstDK", "salon": "I9lbjTGzULnht1ry2Zoh", "viento": "ZlwRmlexuMO7YO33sUyN",
+  "caballeria": "BgC29adcvqovOE9zI1dt"
+ },
+ "escenas": {
+  "batalla": "batalla", "batalla_humo": "batalla", "fortaleza": "batalla",
+  "batalla_victoria": "victoria", "entrada_caracas": "victoria", "caballeria": "caballeria",
+  "andes": "andes", "andes_marcha": "andes", "volcan": "viento",
+  "barco": "mar", "flota": "mar", "barco_noche": "mar_noche",
+  "caribe": "playa", "atardecer_mar": "playa", "quinta": "playa",
+  "llanos": "llanos", "hacienda": "llanos", "llanos_noche": "noche", "noche": "noche", "ventana": "noche",
+  "rio": "rio", "colonia": "ciudad", "lima": "ciudad", "campamento": "campamento", "tormenta": "tormenta",
+  "vela": "vela", "libros": "vela", "boda": "vela", "balanza": "vela",
+  "doc_19abril": "vela", "doc_independencia": "vela", "doc_cartagena": "vela", "doc_jamaica": "vela",
+  "doc_angostura": "vela", "doc_cucuta": "vela", "doc_bolivia": "vela", "doc_renuncia": "vela",
+  "congreso": "salon", "dos_figuras": "salon",
+  "roma": "viento", "amanecer": "viento", "caminos": "viento", "estatua": "viento"
+ }
+}

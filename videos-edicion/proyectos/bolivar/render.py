@@ -135,6 +135,90 @@ def envolver(texto, f, ancho):
     return lineas
 
 
+# ---------------- efectos animados (lluvia, humo, chispas, polvo, luz) ----------------
+
+EFECTOS = {
+    "lluvia": {"andes_marcha", "tormenta", "andes"},
+    "humo": {"batalla", "batalla_humo", "caballeria", "fortaleza", "batalla_victoria"},
+    "brasas": {"campamento", "batalla", "batalla_humo"},
+    "polvo": {"congreso", "dos_figuras", "libros", "vela", "boda", "retrato", "sucre", "manuela", "balanza",
+              "ventana"} | {k for k in IL.DOCUMENTOS},
+    "parpadeo": {"vela", "campamento", "libros", "boda"},
+    "niebla": {"andes", "volcan", "amanecer", "rio", "llanos_noche", "andes_marcha", "noche"},
+}
+_tex = {}
+
+
+def textura_efecto(tipo):
+    if tipo in _tex:
+        return _tex[tipo]
+    rng = np.random.default_rng(hash(tipo) % 1000)
+    if tipo == "lluvia":
+        capa = Image.new("L", (W, H * 2), 0)
+        d = ImageDraw.Draw(capa)
+        for _ in range(1600):
+            x, y = rng.integers(-200, W), rng.integers(0, H * 2)
+            lng = rng.integers(30, 70)
+            d.line((x, y, x + lng * 0.22, y + lng), fill=int(rng.integers(60, 140)), width=2)
+        _tex[tipo] = capa
+    elif tipo in ("humo", "niebla"):
+        n = IL.ruido2d(W * 2, H, 320 if tipo == "humo" else 500, 5, 77 if tipo == "humo" else 78)
+        a = np.clip((n - 0.45) * 2.4, 0, 1)
+        y = np.linspace(0, 1, H)[:, None]
+        if tipo == "niebla":
+            a = a * np.clip((y - 0.35) / 0.4, 0, 1)
+        _tex[tipo] = Image.fromarray((a * 255).astype(np.uint8))
+    elif tipo in ("brasas", "polvo"):
+        cuantas = 70 if tipo == "brasas" else 110
+        _tex[tipo] = [(rng.uniform(0, W), rng.uniform(0, H), rng.uniform(0.4, 1.0), rng.uniform(0, 6.28))
+                      for _ in range(cuantas)]
+    return _tex[tipo]
+
+
+def efectos(im, nombre, T):
+    activos = [k for k, v in EFECTOS.items() if nombre in v]
+    if not activos:
+        return im
+    im = im.convert("RGBA")
+    for tipo in activos:
+        if tipo == "lluvia":
+            tex = textura_efecto("lluvia")
+            off = int((T * 900) % H)
+            a = tex.crop((0, H - off, W, 2 * H - off)).point(lambda v: int(v * (0.55 if nombre == "andes" else 0.9)))
+            capa = Image.new("RGBA", (W, H), (200, 205, 215, 0))
+            capa.putalpha(a)
+            im.alpha_composite(capa)
+        elif tipo in ("humo", "niebla"):
+            tex = textura_efecto(tipo)
+            vel = 35 if tipo == "humo" else 18
+            off = int((T * vel) % W)
+            a = tex.crop((off, 0, off + W, H)).point(lambda v: int(v * (0.32 if tipo == "humo" else 0.28)))
+            color = (150, 135, 120, 0) if tipo == "humo" else (215, 205, 195, 0)
+            capa = Image.new("RGBA", (W, H), color)
+            capa.putalpha(a)
+            im.alpha_composite(capa)
+        elif tipo in ("brasas", "polvo"):
+            d = ImageDraw.Draw(im)
+            for (x0, y0, v, f) in textura_efecto(tipo):
+                if tipo == "brasas":
+                    y = (y0 - T * 90 * v) % H
+                    x = x0 + 25 * math.sin(T * 1.5 + f)
+                    r = 2.5 * v
+                    alfa = int(220 * v * (0.6 + 0.4 * math.sin(T * 6 + f)))
+                    d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 170, 70, alfa))
+                else:
+                    y = (y0 - T * 12 * v) % H
+                    x = (x0 + T * 8 * v + 30 * math.sin(T * 0.4 + f)) % W
+                    r = 1.6 * v + 0.6
+                    alfa = int(110 * v * (0.5 + 0.5 * math.sin(T * 1.2 + f)))
+                    d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 235, 200, alfa))
+    im = im.convert("RGB")
+    if "parpadeo" in activos:
+        k = 1 + 0.035 * math.sin(T * 9.1) + 0.025 * math.sin(T * 13.7 + 1) + 0.02 * math.sin(T * 3.3)
+        im = Image.fromarray(np.clip(np.asarray(im, np.float32) * k, 0, 255).astype(np.uint8))
+    return im
+
+
 def visual(i, t):
     """Imagen 1920x1080 RGB de la escena i en su segundo t (sin subtítulos)."""
     e = ESCENAS[i]
@@ -148,7 +232,8 @@ def visual(i, t):
             MP.capas(nombre, t, big)
             base = big.convert("RGB")
         caja = ken_burns(i, t, dur + FUNDIDO, es_mapa)
-        return base.resize((W, H), Image.BICUBIC, box=caja)
+        im = base.resize((W, H), Image.BICUBIC, box=caja)
+        return efectos(im, nombre, e["inicio"] + t)
     # portada y capítulos: fondo desenfocado y oscuro + texto
     base = imagen(nombre, 14)
     z = 1.0 + 0.06 * t / dur

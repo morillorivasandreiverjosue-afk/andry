@@ -50,6 +50,39 @@ def silencios(x, minimo=0.18):
     return out
 
 
+def alinear(esperados, fin_parrafo, candidatos, sigma=2.2):
+    """Asigna a cada límite entre frases una pausa real, en orden, con el menor costo total
+    (distancia al tiempo esperado, premiando pausas largas sobre todo entre párrafos)."""
+    n, m = len(esperados), len(candidatos)
+    if n == 0:
+        return []
+    if m < n:
+        return [None] * n
+    centros = [(a + b) / 2 for a, b in candidatos]
+    largos = [b - a for a, b in candidatos]
+    INF = float("inf")
+    costo = [[((centros[j] - esperados[i]) / sigma) ** 2 - largos[j] * (6 if fin_parrafo[i] else 3)
+              for j in range(m)] for i in range(n)]
+    dp = [[INF] * m for _ in range(n)]
+    atras = [[-1] * m for _ in range(n)]
+    for j in range(m):
+        dp[0][j] = costo[0][j]
+    for i in range(1, n):
+        mejor, arg = INF, -1
+        for j in range(m):
+            if j > 0 and dp[i - 1][j - 1] < mejor:
+                mejor, arg = dp[i - 1][j - 1], j - 1
+            if arg >= 0:
+                dp[i][j] = mejor + costo[i][j]
+                atras[i][j] = arg
+    j = min(range(m), key=lambda k: dp[n - 1][k])
+    out = [0] * n
+    for i in range(n - 1, -1, -1):
+        out[i] = j
+        j = atras[i][j]
+    return out
+
+
 def sincronizar_parte(x, titulo, parrafos):
     dur = len(x) / SR
     sil = silencios(x)
@@ -67,29 +100,24 @@ def sincronizar_parte(x, titulo, parrafos):
         for k, f in enumerate(fr):
             lista.append({"texto": f, "peso": len(f) + (16 if k == len(fr) - 1 else 7), "parrafo": j})
     total = sum(f["peso"] for f in lista)
-    candidatos = [s for s in hablado if s[0] > ini_texto]
-    t, acum, usados = ini_texto, 0, set()
+    candidatos = [s for s in hablado if s[0] > ini_texto + 0.5 and s[1] < fin - 0.3]
+    # límites esperados entre frases según la cantidad de texto
+    esperados, acum = [], 0
+    for f in lista[:-1]:
+        acum += f["peso"]
+        esperados.append(ini_texto + (fin - ini_texto) * acum / total)
+    fin_parrafo = [lista[i]["parrafo"] != lista[i + 1]["parrafo"] for i in range(len(lista) - 1)]
+    asignado = alinear(esperados, fin_parrafo, candidatos)
+    t = ini_texto
     for i, f in enumerate(lista):
         f["inicio"] = t
-        acum += f["peso"]
         if i == len(lista) - 1:
             f["fin"] = fin
-            break
-        esperado = ini_texto + (fin - ini_texto) * acum / total
-        mejor = None
-        for idx, (a, b) in enumerate(candidatos):
-            if idx in usados or a <= t + 0.6:
-                continue
-            dist = abs((a + b) / 2 - esperado)
-            if dist < 2.5 and (mejor is None or dist < mejor[0] - 0.35 * ((b - a) - mejor[3])):
-                mejor = (dist, idx, a, b - a)
-        if mejor:
-            usados.add(mejor[1])
-            f["fin"] = mejor[2]
-            t = mejor[2] + mejor[3]
+        elif asignado[i] is not None:
+            a, b = candidatos[asignado[i]]
+            f["fin"], t = a, b
         else:
-            f["fin"] = esperado - 0.15
-            t = esperado + 0.15
+            f["fin"], t = esperados[i] - 0.15, esperados[i] + 0.15
     return {"inicio": inicio, "fin_titulo": fin_titulo, "fin": fin, "dur": dur, "frases": lista}
 
 
