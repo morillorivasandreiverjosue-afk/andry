@@ -6,15 +6,18 @@ generados con código, escenas animadas con siluetas, mapas de las campañas y s
 
 ## Cómo generarlo
 
-```bash
-pip install kokoro-onnx soundfile scipy "geopandas<1.0" shapely pillow numpy
-# modelos de voz (una vez)
-mkdir -p modelos
-curl -L -o modelos/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
-curl -L -o modelos/voices-v1.0.bin  https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+En las sesiones de Claude Code en la nube todo se instala solo al empezar
+(`.claude/hooks/session-start.sh`): ffmpeg, las librerías y los modelos de voz en `videos-edicion/modelos/`.
+En tu computadora:
 
-python3 1_voz.py modelos salida            # narración (≈30 min de CPU)
-python3 2_montaje.py salida --modelos modelos --procesos 4   # audio + video (≈1 h)
+```bash
+pip install -r requirements.txt
+mkdir -p ../../modelos
+curl -L -o ../../modelos/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
+curl -L -o ../../modelos/voices-v1.0.bin  https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+
+python3 1_voz.py ../../modelos salida                               # narración (≈30 min de CPU)
+python3 2_montaje.py salida --modelos ../../modelos --procesos 4    # audio + video (≈1,5 h)
 # prueba rápida de un tramo:  python3 2_montaje.py salida --prueba 0 40
 ```
 
