@@ -8,7 +8,12 @@ import voz from "./voz.json";
 
 const hablando = (seg: number) => voz.some((l) => seg >= l.inicio - 0.1 && seg < l.inicio + l.duracion + 0.1);
 
-export const ReelInternet: React.FC = () => {
+export type ReelProps = {
+  // Música de fondo de public/musica/ (sin extensión), o "" para dejar la música original del video
+  musica: string;
+};
+
+export const ReelInternet: React.FC<ReelProps> = ({ musica }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const seg = frame / fps;
@@ -51,7 +56,7 @@ export const ReelInternet: React.FC = () => {
           objectFit="cover"
           style={{ width: "100%", height: "100%" }}
           // La música original baja cuando habla la voz
-          volume={(f) => (hablando(f / fps) ? 0.2 : 0.55)}
+          volume={(f) => (musica ? 0 : hablando(f / fps) ? 0.2 : 0.55)}
         />
       </AbsoluteFill>
 
@@ -76,6 +81,13 @@ export const ReelInternet: React.FC = () => {
         }}
       />
 
+      {musica ? (
+        <Audio
+          src={staticFile(`musica/${musica}.wav`)}
+          // La música baja cuando habla la voz
+          volume={(f) => (hablando(f / fps) ? 0.22 : 0.5)}
+        />
+      ) : null}
       {voz.map((l) => (
         <Sequence key={l.archivo} name={`Voz ${l.archivo}`} from={Math.round(l.inicio * fps)} premountFor={fps}>
           <Audio src={staticFile(l.archivo)} volume={1} />

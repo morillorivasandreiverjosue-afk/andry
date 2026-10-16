@@ -5,3 +5,6 @@ dist
 
 # Ignore the output video from Git but not videos you import into src/.
 out
+
+# La música se genera con: python3 scripts/generar-musica.py
+public/musica/
