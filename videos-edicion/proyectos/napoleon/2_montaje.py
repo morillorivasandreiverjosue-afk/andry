@@ -262,7 +262,7 @@ class Render:
         d = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)
         self.vineta = np.clip(1.08 - 0.42 * d ** 2.2, 0.25, 1.0).astype(np.float32)
         rng = np.random.default_rng(7)
-        self.grano = [rng.normal(0, 7, (H, W, 1)).astype(np.int16) for _ in range(6)]
+        self.grano = [rng.normal(0, 2.5, (H, W, 1)).astype(np.int16) for _ in range(3)]
         self.grade = {}
         self.sprite = ES.resplandor(256, (255, 210, 140))
         self.sprite_rojo = ES.resplandor(256, (255, 120, 40))
@@ -576,7 +576,7 @@ class Render:
         # fundido de entrada/salida a negro al principio y al final
         g = self._grade(tono)
         out = (arr.astype(np.uint32) * g >> 8).astype(np.int16)
-        out += self.grano[n % 6]
+        out += self.grano[(n // 2) % 3]
         if brillo:
             out += brillo
         parpadeo = 1 + 0.012 * math.sin(T * 17) * math.sin(T * 3.1)
@@ -613,7 +613,7 @@ def trocear(texto, maximo=104):
 def trabajador(tl, f0, f1, ruta, idx):
     r = Render(tl)
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "faster", "-crf", "20", "-threads", "2",
+           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "faster", "-crf", "23", "-tune", "film", "-threads", "2",
            "-pix_fmt", "yuv420p", "-g", str(FPS * 4), str(ruta)]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     t0 = time.time()
