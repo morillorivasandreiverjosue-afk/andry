@@ -1,0 +1,14 @@
+[
+  { "inicio": 0.2, "fin": 4.9, "texto": "¿El día que el mundo se quedó sin internet? Una historia que deberías conocer." },
+  { "inicio": 5.2, "fin": 11.6, "texto": "¿Te imaginas despertar un día, agarrar tu celular, y descubrir que no tienes internet?" },
+  { "inicio": 11.9, "fin": 16.7, "texto": "Sin conexión significa: sin WhatsApp, sin redes sociales, sin tus videos favoritos." },
+  { "inicio": 17.0, "fin": 21.4, "texto": "Aunque parezca increíble, el mundo ha sufrido grandes interrupciones de internet." },
+  { "inicio": 21.8, "fin": 28.4, "texto": "En mil novecientos sesenta y nueve se envió uno de los primeros mensajes por ARPANET, el abuelo del internet." },
+  { "inicio": 28.8, "fin": 33.6, "texto": "Décadas después, internet se volvió esencial para millones de personas." },
+  { "inicio": 33.9, "fin": 40.7, "texto": "Parece que siempre está disponible, pero depende de cables submarinos, centros de datos, servidores y muchas otras tecnologías." },
+  { "inicio": 41.0, "fin": 45.6, "texto": "Cuando uno de estos sistemas falla, millones de personas pueden quedarse sin conexión." },
+  { "inicio": 45.9, "fin": 52.6, "texto": "En octubre de dos mil veintiuno, una falla dejó fuera de servicio a Facebook, Instagram y WhatsApp durante varias horas." },
+  { "inicio": 52.9, "fin": 59.6, "texto": "Pero ojo: no fue una caída de todo internet, sino de los servicios de una misma empresa." },
+  { "inicio": 59.9, "fin": 66.6, "texto": "Hoy dependemos tanto de internet que una falla puede afectar nuestras comunicaciones, nuestros trabajos y hasta nuestros negocios." },
+  { "inicio": 66.9, "fin": 71.8, "texto": "¿Y tú qué harías un día sin internet? Cuéntamelo en los comentarios." }
+]

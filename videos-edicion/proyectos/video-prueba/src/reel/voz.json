@@ -1,0 +1,976 @@
+[
+  {
+    "archivo": "reel/voz-1.wav",
+    "inicio": 0.2,
+    "duracion": 3.546,
+    "palabras": [
+      {
+        "texto": "¿El",
+        "desde": 0.2,
+        "hasta": 0.367
+      },
+      {
+        "texto": "día",
+        "desde": 0.367,
+        "hasta": 0.534
+      },
+      {
+        "texto": "que",
+        "desde": 0.534,
+        "hasta": 0.701
+      },
+      {
+        "texto": "el",
+        "desde": 0.701,
+        "hasta": 0.826
+      },
+      {
+        "texto": "mundo",
+        "desde": 0.826,
+        "hasta": 1.076
+      },
+      {
+        "texto": "se",
+        "desde": 1.076,
+        "hasta": 1.201
+      },
+      {
+        "texto": "quedó",
+        "desde": 1.201,
+        "hasta": 1.452
+      },
+      {
+        "texto": "sin",
+        "desde": 1.452,
+        "hasta": 1.618
+      },
+      {
+        "texto": "internet?",
+        "desde": 1.618,
+        "hasta": 2.161
+      },
+      {
+        "texto": "Una",
+        "desde": 2.161,
+        "hasta": 2.328
+      },
+      {
+        "texto": "historia",
+        "desde": 2.328,
+        "hasta": 2.703
+      },
+      {
+        "texto": "que",
+        "desde": 2.703,
+        "hasta": 2.87
+      },
+      {
+        "texto": "deberías",
+        "desde": 2.87,
+        "hasta": 3.245
+      },
+      {
+        "texto": "conocer.",
+        "desde": 3.245,
+        "hasta": 3.746
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-2.wav",
+    "inicio": 5.2,
+    "duracion": 4.233,
+    "palabras": [
+      {
+        "texto": "¿Te",
+        "desde": 5.2,
+        "hasta": 5.376
+      },
+      {
+        "texto": "imaginas",
+        "desde": 5.376,
+        "hasta": 5.773
+      },
+      {
+        "texto": "despertar",
+        "desde": 5.773,
+        "hasta": 6.214
+      },
+      {
+        "texto": "un",
+        "desde": 6.214,
+        "hasta": 6.347
+      },
+      {
+        "texto": "día,",
+        "desde": 6.347,
+        "hasta": 6.699
+      },
+      {
+        "texto": "agarrar",
+        "desde": 6.699,
+        "hasta": 7.052
+      },
+      {
+        "texto": "tu",
+        "desde": 7.052,
+        "hasta": 7.184
+      },
+      {
+        "texto": "celular,",
+        "desde": 7.184,
+        "hasta": 7.714
+      },
+      {
+        "texto": "y",
+        "desde": 7.714,
+        "hasta": 7.802
+      },
+      {
+        "texto": "descubrir",
+        "desde": 7.802,
+        "hasta": 8.243
+      },
+      {
+        "texto": "que",
+        "desde": 8.243,
+        "hasta": 8.419
+      },
+      {
+        "texto": "no",
+        "desde": 8.419,
+        "hasta": 8.551
+      },
+      {
+        "texto": "tienes",
+        "desde": 8.551,
+        "hasta": 8.86
+      },
+      {
+        "texto": "internet?",
+        "desde": 8.86,
+        "hasta": 9.433
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-3.wav",
+    "inicio": 11.9,
+    "duracion": 4.569,
+    "palabras": [
+      {
+        "texto": "Sin",
+        "desde": 11.9,
+        "hasta": 12.09
+      },
+      {
+        "texto": "conexión",
+        "desde": 12.09,
+        "hasta": 12.519
+      },
+      {
+        "texto": "significa:",
+        "desde": 12.519,
+        "hasta": 13.185
+      },
+      {
+        "texto": "sin",
+        "desde": 13.185,
+        "hasta": 13.375
+      },
+      {
+        "texto": "WhatsApp,",
+        "desde": 13.375,
+        "hasta": 13.994
+      },
+      {
+        "texto": "sin",
+        "desde": 13.994,
+        "hasta": 14.184
+      },
+      {
+        "texto": "redes",
+        "desde": 14.184,
+        "hasta": 14.47
+      },
+      {
+        "texto": "sociales,",
+        "desde": 14.47,
+        "hasta": 15.089
+      },
+      {
+        "texto": "sin",
+        "desde": 15.089,
+        "hasta": 15.279
+      },
+      {
+        "texto": "tus",
+        "desde": 15.279,
+        "hasta": 15.469
+      },
+      {
+        "texto": "videos",
+        "desde": 15.469,
+        "hasta": 15.803
+      },
+      {
+        "texto": "favoritos.",
+        "desde": 15.803,
+        "hasta": 16.469
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-4.wav",
+    "inicio": 17.0,
+    "duracion": 3.647,
+    "palabras": [
+      {
+        "texto": "Aunque",
+        "desde": 17.0,
+        "hasta": 17.29
+      },
+      {
+        "texto": "parezca",
+        "desde": 17.29,
+        "hasta": 17.622
+      },
+      {
+        "texto": "increíble,",
+        "desde": 17.622,
+        "hasta": 18.202
+      },
+      {
+        "texto": "el",
+        "desde": 18.202,
+        "hasta": 18.326
+      },
+      {
+        "texto": "mundo",
+        "desde": 18.326,
+        "hasta": 18.575
+      },
+      {
+        "texto": "ha",
+        "desde": 18.575,
+        "hasta": 18.699
+      },
+      {
+        "texto": "sufrido",
+        "desde": 18.699,
+        "hasta": 19.03
+      },
+      {
+        "texto": "grandes",
+        "desde": 19.03,
+        "hasta": 19.362
+      },
+      {
+        "texto": "interrupciones",
+        "desde": 19.362,
+        "hasta": 19.984
+      },
+      {
+        "texto": "de",
+        "desde": 19.984,
+        "hasta": 20.108
+      },
+      {
+        "texto": "internet.",
+        "desde": 20.108,
+        "hasta": 20.647
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-5.wav",
+    "inicio": 21.8,
+    "duracion": 5.087,
+    "palabras": [
+      {
+        "texto": "En",
+        "desde": 21.8,
+        "hasta": 21.932
+      },
+      {
+        "texto": "mil",
+        "desde": 21.932,
+        "hasta": 22.107
+      },
+      {
+        "texto": "novecientos",
+        "desde": 22.107,
+        "hasta": 22.633
+      },
+      {
+        "texto": "sesenta",
+        "desde": 22.633,
+        "hasta": 22.984
+      },
+      {
+        "texto": "y",
+        "desde": 22.984,
+        "hasta": 23.072
+      },
+      {
+        "texto": "nueve",
+        "desde": 23.072,
+        "hasta": 23.335
+      },
+      {
+        "texto": "se",
+        "desde": 23.335,
+        "hasta": 23.466
+      },
+      {
+        "texto": "envió",
+        "desde": 23.466,
+        "hasta": 23.73
+      },
+      {
+        "texto": "uno",
+        "desde": 23.73,
+        "hasta": 23.905
+      },
+      {
+        "texto": "de",
+        "desde": 23.905,
+        "hasta": 24.036
+      },
+      {
+        "texto": "los",
+        "desde": 24.036,
+        "hasta": 24.212
+      },
+      {
+        "texto": "primeros",
+        "desde": 24.212,
+        "hasta": 24.607
+      },
+      {
+        "texto": "mensajes",
+        "desde": 24.607,
+        "hasta": 25.001
+      },
+      {
+        "texto": "por",
+        "desde": 25.001,
+        "hasta": 25.177
+      },
+      {
+        "texto": "ARPANET,",
+        "desde": 25.177,
+        "hasta": 25.703
+      },
+      {
+        "texto": "el",
+        "desde": 25.703,
+        "hasta": 25.834
+      },
+      {
+        "texto": "abuelo",
+        "desde": 25.834,
+        "hasta": 26.141
+      },
+      {
+        "texto": "del",
+        "desde": 26.141,
+        "hasta": 26.317
+      },
+      {
+        "texto": "internet.",
+        "desde": 26.317,
+        "hasta": 26.887
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-6.wav",
+    "inicio": 28.8,
+    "duracion": 3.609,
+    "palabras": [
+      {
+        "texto": "Décadas",
+        "desde": 28.8,
+        "hasta": 29.17
+      },
+      {
+        "texto": "después,",
+        "desde": 29.17,
+        "hasta": 29.725
+      },
+      {
+        "texto": "internet",
+        "desde": 29.725,
+        "hasta": 30.142
+      },
+      {
+        "texto": "se",
+        "desde": 30.142,
+        "hasta": 30.281
+      },
+      {
+        "texto": "volvió",
+        "desde": 30.281,
+        "hasta": 30.604
+      },
+      {
+        "texto": "esencial",
+        "desde": 30.604,
+        "hasta": 31.021
+      },
+      {
+        "texto": "para",
+        "desde": 31.021,
+        "hasta": 31.252
+      },
+      {
+        "texto": "millones",
+        "desde": 31.252,
+        "hasta": 31.669
+      },
+      {
+        "texto": "de",
+        "desde": 31.669,
+        "hasta": 31.807
+      },
+      {
+        "texto": "personas.",
+        "desde": 31.807,
+        "hasta": 32.409
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-7.wav",
+    "inicio": 33.9,
+    "duracion": 6.531,
+    "palabras": [
+      {
+        "texto": "Parece",
+        "desde": 33.9,
+        "hasta": 34.227
+      },
+      {
+        "texto": "que",
+        "desde": 34.227,
+        "hasta": 34.413
+      },
+      {
+        "texto": "siempre",
+        "desde": 34.413,
+        "hasta": 34.786
+      },
+      {
+        "texto": "está",
+        "desde": 34.786,
+        "hasta": 35.02
+      },
+      {
+        "texto": "disponible,",
+        "desde": 35.02,
+        "hasta": 35.719
+      },
+      {
+        "texto": "pero",
+        "desde": 35.719,
+        "hasta": 35.953
+      },
+      {
+        "texto": "depende",
+        "desde": 35.953,
+        "hasta": 36.326
+      },
+      {
+        "texto": "de",
+        "desde": 36.326,
+        "hasta": 36.466
+      },
+      {
+        "texto": "cables",
+        "desde": 36.466,
+        "hasta": 36.792
+      },
+      {
+        "texto": "submarinos,",
+        "desde": 36.792,
+        "hasta": 37.492
+      },
+      {
+        "texto": "centros",
+        "desde": 37.492,
+        "hasta": 37.865
+      },
+      {
+        "texto": "de",
+        "desde": 37.865,
+        "hasta": 38.005
+      },
+      {
+        "texto": "datos,",
+        "desde": 38.005,
+        "hasta": 38.472
+      },
+      {
+        "texto": "servidores",
+        "desde": 38.472,
+        "hasta": 38.985
+      },
+      {
+        "texto": "y",
+        "desde": 38.985,
+        "hasta": 39.078
+      },
+      {
+        "texto": "muchas",
+        "desde": 39.078,
+        "hasta": 39.405
+      },
+      {
+        "texto": "otras",
+        "desde": 39.405,
+        "hasta": 39.685
+      },
+      {
+        "texto": "tecnologías.",
+        "desde": 39.685,
+        "hasta": 40.431
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-8.wav",
+    "inicio": 41.0,
+    "duracion": 4.149,
+    "palabras": [
+      {
+        "texto": "Cuando",
+        "desde": 41.0,
+        "hasta": 41.312
+      },
+      {
+        "texto": "uno",
+        "desde": 41.312,
+        "hasta": 41.491
+      },
+      {
+        "texto": "de",
+        "desde": 41.491,
+        "hasta": 41.625
+      },
+      {
+        "texto": "estos",
+        "desde": 41.625,
+        "hasta": 41.892
+      },
+      {
+        "texto": "sistemas",
+        "desde": 41.892,
+        "hasta": 42.294
+      },
+      {
+        "texto": "falla,",
+        "desde": 42.294,
+        "hasta": 42.74
+      },
+      {
+        "texto": "millones",
+        "desde": 42.74,
+        "hasta": 43.142
+      },
+      {
+        "texto": "de",
+        "desde": 43.142,
+        "hasta": 43.275
+      },
+      {
+        "texto": "personas",
+        "desde": 43.275,
+        "hasta": 43.677
+      },
+      {
+        "texto": "pueden",
+        "desde": 43.677,
+        "hasta": 43.989
+      },
+      {
+        "texto": "quedarse",
+        "desde": 43.989,
+        "hasta": 44.391
+      },
+      {
+        "texto": "sin",
+        "desde": 44.391,
+        "hasta": 44.569
+      },
+      {
+        "texto": "conexión.",
+        "desde": 44.569,
+        "hasta": 45.149
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-9.wav",
+    "inicio": 45.9,
+    "duracion": 6.181,
+    "palabras": [
+      {
+        "texto": "En",
+        "desde": 45.9,
+        "hasta": 46.043
+      },
+      {
+        "texto": "octubre",
+        "desde": 46.043,
+        "hasta": 46.423
+      },
+      {
+        "texto": "de",
+        "desde": 46.423,
+        "hasta": 46.566
+      },
+      {
+        "texto": "dos",
+        "desde": 46.566,
+        "hasta": 46.756
+      },
+      {
+        "texto": "mil",
+        "desde": 46.756,
+        "hasta": 46.946
+      },
+      {
+        "texto": "veintiuno,",
+        "desde": 46.946,
+        "hasta": 47.612
+      },
+      {
+        "texto": "una",
+        "desde": 47.612,
+        "hasta": 47.802
+      },
+      {
+        "texto": "falla",
+        "desde": 47.802,
+        "hasta": 48.087
+      },
+      {
+        "texto": "dejó",
+        "desde": 48.087,
+        "hasta": 48.325
+      },
+      {
+        "texto": "fuera",
+        "desde": 48.325,
+        "hasta": 48.61
+      },
+      {
+        "texto": "de",
+        "desde": 48.61,
+        "hasta": 48.753
+      },
+      {
+        "texto": "servicio",
+        "desde": 48.753,
+        "hasta": 49.181
+      },
+      {
+        "texto": "a",
+        "desde": 49.181,
+        "hasta": 49.276
+      },
+      {
+        "texto": "Facebook,",
+        "desde": 49.276,
+        "hasta": 49.894
+      },
+      {
+        "texto": "Instagram",
+        "desde": 49.894,
+        "hasta": 50.369
+      },
+      {
+        "texto": "y",
+        "desde": 50.369,
+        "hasta": 50.464
+      },
+      {
+        "texto": "WhatsApp",
+        "desde": 50.464,
+        "hasta": 50.892
+      },
+      {
+        "texto": "durante",
+        "desde": 50.892,
+        "hasta": 51.273
+      },
+      {
+        "texto": "varias",
+        "desde": 51.273,
+        "hasta": 51.605
+      },
+      {
+        "texto": "horas.",
+        "desde": 51.605,
+        "hasta": 52.081
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-10.wav",
+    "inicio": 52.9,
+    "duracion": 4.695,
+    "palabras": [
+      {
+        "texto": "Pero",
+        "desde": 52.9,
+        "hasta": 53.14
+      },
+      {
+        "texto": "ojo:",
+        "desde": 53.14,
+        "hasta": 53.523
+      },
+      {
+        "texto": "no",
+        "desde": 53.523,
+        "hasta": 53.667
+      },
+      {
+        "texto": "fue",
+        "desde": 53.667,
+        "hasta": 53.858
+      },
+      {
+        "texto": "una",
+        "desde": 53.858,
+        "hasta": 54.05
+      },
+      {
+        "texto": "caída",
+        "desde": 54.05,
+        "hasta": 54.337
+      },
+      {
+        "texto": "de",
+        "desde": 54.337,
+        "hasta": 54.481
+      },
+      {
+        "texto": "todo",
+        "desde": 54.481,
+        "hasta": 54.721
+      },
+      {
+        "texto": "internet,",
+        "desde": 54.721,
+        "hasta": 55.343
+      },
+      {
+        "texto": "sino",
+        "desde": 55.343,
+        "hasta": 55.583
+      },
+      {
+        "texto": "de",
+        "desde": 55.583,
+        "hasta": 55.727
+      },
+      {
+        "texto": "los",
+        "desde": 55.727,
+        "hasta": 55.918
+      },
+      {
+        "texto": "servicios",
+        "desde": 55.918,
+        "hasta": 56.397
+      },
+      {
+        "texto": "de",
+        "desde": 56.397,
+        "hasta": 56.541
+      },
+      {
+        "texto": "una",
+        "desde": 56.541,
+        "hasta": 56.733
+      },
+      {
+        "texto": "misma",
+        "desde": 56.733,
+        "hasta": 57.02
+      },
+      {
+        "texto": "empresa.",
+        "desde": 57.02,
+        "hasta": 57.595
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-11.wav",
+    "inicio": 59.9,
+    "duracion": 6.266,
+    "palabras": [
+      {
+        "texto": "Hoy",
+        "desde": 59.9,
+        "hasta": 60.083
+      },
+      {
+        "texto": "dependemos",
+        "desde": 60.083,
+        "hasta": 60.586
+      },
+      {
+        "texto": "tanto",
+        "desde": 60.586,
+        "hasta": 60.86
+      },
+      {
+        "texto": "de",
+        "desde": 60.86,
+        "hasta": 60.998
+      },
+      {
+        "texto": "internet",
+        "desde": 60.998,
+        "hasta": 61.409
+      },
+      {
+        "texto": "que",
+        "desde": 61.409,
+        "hasta": 61.592
+      },
+      {
+        "texto": "una",
+        "desde": 61.592,
+        "hasta": 61.775
+      },
+      {
+        "texto": "falla",
+        "desde": 61.775,
+        "hasta": 62.05
+      },
+      {
+        "texto": "puede",
+        "desde": 62.05,
+        "hasta": 62.324
+      },
+      {
+        "texto": "afectar",
+        "desde": 62.324,
+        "hasta": 62.69
+      },
+      {
+        "texto": "nuestras",
+        "desde": 62.69,
+        "hasta": 63.102
+      },
+      {
+        "texto": "comunicaciones,",
+        "desde": 63.102,
+        "hasta": 63.971
+      },
+      {
+        "texto": "nuestros",
+        "desde": 63.971,
+        "hasta": 64.382
+      },
+      {
+        "texto": "trabajos",
+        "desde": 64.382,
+        "hasta": 64.794
+      },
+      {
+        "texto": "y",
+        "desde": 64.794,
+        "hasta": 64.885
+      },
+      {
+        "texto": "hasta",
+        "desde": 64.885,
+        "hasta": 65.16
+      },
+      {
+        "texto": "nuestros",
+        "desde": 65.16,
+        "hasta": 65.571
+      },
+      {
+        "texto": "negocios.",
+        "desde": 65.571,
+        "hasta": 66.166
+      }
+    ]
+  },
+  {
+    "archivo": "reel/voz-12.wav",
+    "inicio": 66.9,
+    "duracion": 3.225,
+    "palabras": [
+      {
+        "texto": "¿Y",
+        "desde": 66.9,
+        "hasta": 67.029
+      },
+      {
+        "texto": "tú",
+        "desde": 67.029,
+        "hasta": 67.158
+      },
+      {
+        "texto": "qué",
+        "desde": 67.158,
+        "hasta": 67.33
+      },
+      {
+        "texto": "harías",
+        "desde": 67.33,
+        "hasta": 67.631
+      },
+      {
+        "texto": "un",
+        "desde": 67.631,
+        "hasta": 67.76
+      },
+      {
+        "texto": "día",
+        "desde": 67.76,
+        "hasta": 67.932
+      },
+      {
+        "texto": "sin",
+        "desde": 67.932,
+        "hasta": 68.104
+      },
+      {
+        "texto": "internet?",
+        "desde": 68.104,
+        "hasta": 68.663
+      },
+      {
+        "texto": "Cuéntamelo",
+        "desde": 68.663,
+        "hasta": 69.136
+      },
+      {
+        "texto": "en",
+        "desde": 69.136,
+        "hasta": 69.265
+      },
+      {
+        "texto": "los",
+        "desde": 69.265,
+        "hasta": 69.437
+      },
+      {
+        "texto": "comentarios.",
+        "desde": 69.437,
+        "hasta": 70.125
+      }
+    ]
+  }
+]
