@@ -11,3 +11,6 @@ exportados/*
 *.mp3
 .venv/
 __pycache__/
+
+# Modelos de voz descargados automáticamente
+modelos/

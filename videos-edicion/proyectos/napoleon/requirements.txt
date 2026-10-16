@@ -1,0 +1,7 @@
+kokoro-onnx>=0.4
+soundfile>=0.12
+scipy>=1.11
+geopandas<1.0
+shapely>=2.0
+Pillow>=10
+numpy>=1.26
