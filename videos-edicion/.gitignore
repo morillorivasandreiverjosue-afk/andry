@@ -14,3 +14,5 @@ __pycache__/
 # Archivos generados del documental de Bolívar
 proyectos/bolivar/build/
 proyectos/bolivar/voz/
+# Audios de narración generados
+narracion/proyectos/*/audio/

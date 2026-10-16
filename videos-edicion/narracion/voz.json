@@ -1,0 +1,32 @@
+{
+  "_comentario": "Configuración de la voz del canal Curiosidades del Mundo. El voice_id solo se cambia aquí; las herramientas nunca lo sustituyen por otro.",
+  "canal": "Curiosidades del Mundo",
+  "voice_id": "nYm4p0R8BhHFRBH8wGHm",
+  "voice_nombre": "Jose Manuel - Warm, Natural Narrator",
+  "estado": "provisional: probada el 2026-10-16, pendiente de que el dueño del canal la confirme",
+  "modelo": "eleven_v4",
+  "idioma": "es",
+  "acento": "español latinoamericano",
+  "estilo": {
+    "etiqueta_inicial": "[serious]",
+    "descripcion": "Narración natural, clara, seria y profesional para documentales históricos.",
+    "pausa_entre_parrafos": "[pause]",
+    "pausa_capitulo": "[long pause]"
+  },
+  "partes": {
+    "max_caracteres": 2500,
+    "una_parte_por_capitulo": true,
+    "variaciones_por_parte": 1
+  },
+  "api_directa": {
+    "_comentario": "Solo para elevenlabs_api.py (uso en tu computadora con ELEVENLABS_API_KEY). Sin probar desde este entorno.",
+    "formato": "mp3_44100_128",
+    "voice_settings": {
+      "stability": 0.5,
+      "similarity_boost": 0.8,
+      "style": 0.15,
+      "use_speaker_boost": true,
+      "speed": 0.95
+    }
+  }
+}

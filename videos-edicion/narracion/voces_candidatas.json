@@ -1,0 +1,15 @@
+{
+  "_comentario": "Voces masculinas en español latinoamericano encontradas en la biblioteca de ElevenLabs el 2026-10-16 (IDs copiados tal cual del catálogo). Solo 'nYm4p0R8BhHFRBH8wGHm' fue probada con audio.",
+  "voces": [
+    {"voice_id": "nYm4p0R8BhHFRBH8wGHm", "nombre": "Jose Manuel - Warm, Natural Narrator", "acento": "venezolano", "nota": "probada; cálida, natural, pensada para documentales"},
+    {"voice_id": "rCn6ocleHn48Yoy4YdKp", "nombre": "Fernando", "acento": "latinoamericano", "nota": "grave y calmada"},
+    {"voice_id": "0zli90n8G9wV4hLPUpiB", "nombre": "Eduardo", "acento": "latinoamericano", "nota": "narrador con pausas expresivas, documentales"},
+    {"voice_id": "eqsD9RWsdCgHoRsbXS5q", "nombre": "Juan Voz Grave - Business Man", "acento": "mexicano neutro", "nota": "barítono, ritmo medio-lento"},
+    {"voice_id": "X1Mty9qeYaEDFZxXV0qH", "nombre": "Mauricio - Tono Institucional", "acento": "colombiano neutro", "nota": "profesional, confiable"},
+    {"voice_id": "DNC14bkMKrUa9gLhndyk", "nombre": "Jhonatan - Narrador premium", "acento": "colombiano", "nota": "educativo, narración pausada"},
+    {"voice_id": "Hqw6obVn6OXZLzOSdENm", "nombre": "Berto - Professional, Warm & Expressive", "acento": "latinoamericano", "nota": "expresiva"},
+    {"voice_id": "qK97aPuDo74niFLxjFrK", "nombre": "Miguel Paz (Sofisticado y con Autoridad)", "acento": "mexicano", "nota": "autoridad, ritmo deliberado"},
+    {"voice_id": "1RWI7KOmtByXLnhLCyvV", "nombre": "johan steve", "acento": "latino neutro", "nota": "joven, documentales y YouTube"},
+    {"voice_id": "G7PzgUnzbxpbetzC2QMe", "nombre": "PaulLP storytelling voice", "acento": "latinoamericano", "nota": "cálida, cinematográfica"}
+  ]
+}
