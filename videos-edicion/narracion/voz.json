@@ -3,7 +3,7 @@
   "canal": "Curiosidades del Mundo",
   "voice_id": "nYm4p0R8BhHFRBH8wGHm",
   "voice_nombre": "Jose Manuel - Warm, Natural Narrator",
-  "estado": "provisional: probada el 2026-10-16, pendiente de que el dueño del canal la confirme",
+  "estado": "definitiva: elegida por el dueño del canal el 2026-10-16",
   "modelo": "eleven_v4",
   "idioma": "es",
   "acento": "español latinoamericano",
@@ -28,5 +28,11 @@
       "use_speaker_boost": true,
       "speed": 0.95
     }
+  },
+  "toma_de_referencia": {
+    "archivo": "prueba-jose-manuel-4.mp3",
+    "generation_id": "YEnDxyIZstxW1JWBDBlG",
+    "duracion_s": 17.6,
+    "nota": "La favorita fue la 4.ª de 4 versiones del mismo texto: la más ágil (17,6 s frente a 19-20 s de las otras). Mismo voice_id; cada generación varía un poco el ritmo."
   }
 }
