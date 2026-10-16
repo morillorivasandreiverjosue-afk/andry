@@ -460,6 +460,60 @@ def musica(ruta, dur, sr=22050):
         w.writeframes((out * 32767).astype(np.int16).tobytes())
 
 
+# ---------------- sonidos de ambiente (ElevenLabs) ----------------
+
+def ambientes(ruta, dur, sr=44100):
+    conf = json.loads((AQUI / "ambientes.json").read_text(encoding="utf-8"))
+    carpeta = BUILD / "ambientes"
+    disponibles = {f.stem for f in carpeta.glob("*.mp3")} if carpeta.exists() else set()
+    sustitutos = {"victoria": "batalla", "mar_noche": "mar", "playa": "mar", "tormenta": "andes",
+                  "llanos": "viento", "rio": "viento", "salon": "ciudad"}
+    cache = {}
+
+    def cargar(nombre):
+        if nombre not in cache:
+            r = subprocess.run(["ffmpeg", "-v", "error", "-i", str(carpeta / f"{nombre}.mp3"), "-ac", "1", "-ar",
+                                str(sr), "-f", "f32le", "-"], capture_output=True, check=True)
+            x = np.frombuffer(r.stdout, np.float32)
+            cache[nombre] = x / (np.sqrt((x ** 2).mean()) + 1e-9) * 0.1  # mismo volumen para todos
+        return cache[nombre]
+
+    n = int(dur * sr)
+    out = np.zeros(n, np.float32)
+    for e in ESCENAS:
+        if e["tipo"] != "plano":
+            continue
+        nombre = conf["escenas"].get(e["visual"])
+        if nombre and nombre not in disponibles:
+            nombre = sustitutos.get(nombre)
+        if not nombre or nombre not in disponibles:
+            continue
+        x = cargar(nombre)
+        a, b = int(max(0, e["inicio"] - 0.8) * sr), int(min(dur, e["fin"] + 0.8) * sr)
+        largo = b - a
+        if largo <= 0:
+            continue
+        rep = np.tile(x, largo // len(x) + 2)
+        ini = int(np.random.default_rng(a).integers(0, len(x)))
+        seg = rep[ini:ini + largo].copy()
+        f = min(int(1.2 * sr), largo // 2)
+        seg[:f] *= np.linspace(0, 1, f) ** 0.5
+        seg[-f:] *= np.linspace(1, 0, f) ** 0.5
+        out[a:b] += seg
+    gan = np.full(n, 1.0, np.float32)
+    for fr in TODAS_FRASES:
+        a, b = int((fr["inicio"] - 0.3) * sr), int((fr["fin"] + 0.3) * sr)
+        gan[max(0, a):min(n, b)] = 0.45
+    v = int(0.6 * sr)
+    gan = np.convolve(gan, np.ones(v, np.float32) / v, mode="same")
+    out *= gan
+    with wave.open(str(ruta), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes((np.clip(out, -1, 1) * 32767).astype(np.int16).tobytes())
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("-o", default=str(AQUI.parent.parent / "exportados" / "simon-bolivar-documental.mp4"))
@@ -498,13 +552,18 @@ def main():
                     "-c", "copy", str(video)], check=True)
     mus = BUILD / "musica.wav"
     musica(mus, LINEA["duracion"])
-    voz = ("highpass=f=80,lowpass=f=7200,equalizer=f=180:t=q:w=1:g=3,equalizer=f=3000:t=q:w=1.5:g=2,"
-           "aecho=0.85:0.6:35|60:0.12|0.07,acompressor=threshold=-20dB:ratio=3:attack=10:release=200,"
-           "aresample=48000,volume=1.6")
-    filtro = (f"[1:a]{voz}[v];[2:a]aresample=48000,volume=0.55[m];"
-              f"[v][m]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-15:TP=-1.5:LRA=11[a]")
+    amb = BUILD / "ambientes.wav"
+    ambientes(amb, LINEA["duracion"])
+    if LINEA.get("voz") == "elevenlabs":
+        voz = "highpass=f=60,acompressor=threshold=-18dB:ratio=2.5:attack=15:release=250,aresample=48000,volume=1.3"
+    else:
+        voz = ("highpass=f=80,lowpass=f=7200,equalizer=f=180:t=q:w=1:g=3,equalizer=f=3000:t=q:w=1.5:g=2,"
+               "aecho=0.85:0.6:35|60:0.12|0.07,acompressor=threshold=-20dB:ratio=3:attack=10:release=200,"
+               "aresample=48000,volume=1.6")
+    filtro = (f"[1:a]{voz}[v];[2:a]aresample=48000,volume=0.5[m];[3:a]aresample=48000,volume=0.9[s];"
+              f"[v][m][s]amix=inputs=3:duration=first:normalize=0,loudnorm=I=-15:TP=-1.5:LRA=11[a]")
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(video),
-                    "-i", str(BUILD / "narracion.wav"), "-i", str(mus), "-filter_complex", filtro,
+                    "-i", str(BUILD / "narracion.wav"), "-i", str(mus), "-i", str(amb), "-filter_complex", filtro,
                     "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ac", "2",
                     "-t", f"{total:.3f}", "-movflags", "+faststart", args.o], check=True)
     print("Listo:", args.o)
