@@ -72,6 +72,19 @@ def limpiar(html):
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", html or "")).strip()
 
 
+def creditos(meta, titulos):
+    """Créditos para la descripción de YouTube: solo las obras que de verdad salen en el video."""
+    lineas = ["IMÁGENES (Wikimedia Commons):"]
+    for t in sorted(set(titulos)):
+        if t in meta and ruta_prep(t).exists():
+            m = meta[t]
+            nombre = re.sub(r"\.(jpe?g|png|tiff?)$", "", t, flags=re.I)
+            autor = re.sub(r"(Unknown author)+", "Autor desconocido", limpiar(m["autor"])) or "Autor desconocido"
+            lic = "Dominio público" if m["licencia"].lower() == "public domain" else m["licencia"]
+            lineas.append(f"• {nombre} — {autor} — {lic} — {m['pagina']}")
+    (AQUI / "creditos.txt").write_text("\n".join(lineas) + "\n", encoding="utf-8")
+
+
 def main():
     ORIG.mkdir(parents=True, exist_ok=True)
     PREP.mkdir(parents=True, exist_ok=True)
@@ -98,12 +111,7 @@ def main():
                 continue
         preparar(Image.open(orig)).save(ruta_prep(t), quality=93)
         print(f"[{n}/{len(titulos)}] {t}", flush=True)
-    lineas = ["Imágenes: Wikimedia Commons (https://commons.wikimedia.org)", ""]
-    for t in sorted(titulos):
-        if t in meta:
-            m = meta[t]
-            lineas.append(f"- {t} — {limpiar(m['autor']) or 'Autor desconocido'} — {m['licencia']} — {m['pagina']}")
-    (AQUI / "creditos.txt").write_text("\n".join(lineas) + "\n", encoding="utf-8")
+    creditos(meta, titulos)
     print("Listo.", sum(ruta_prep(t).exists() for t in titulos), "de", len(titulos), "imágenes preparadas")
 
 
