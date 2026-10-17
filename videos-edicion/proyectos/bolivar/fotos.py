@@ -2,7 +2,7 @@
 """Paso 2b: descarga de Wikimedia Commons las obras de fotos.json y las prepara para el render.
 
 Cada imagen queda en build/fotos/prep/ a 2304x1296 (el lienzo de las ilustraciones). Las horizontales
-se recortan para llenar el cuadro; las verticales (retratos) van completas sobre un fondo desenfocado
+grandes se recortan para llenar el cuadro; las verticales (retratos) y las pequeñas van completas sobre un fondo desenfocado
 de sí mismas. Los créditos (autor y licencia) se guardan en creditos.txt.
 
 Uso (desde proyectos/bolivar/):  python3 fotos.py
@@ -50,12 +50,14 @@ def tono(im):
 def preparar(im):
     im = ImageOps.exif_transpose(im).convert("RGB")
     r = im.width / im.height
-    if r >= 1.45:
+    if r >= 1.45 and im.width >= 1400:
         return tono(ImageOps.fit(im, (W0, H0), Image.LANCZOS))
     fondo = ImageOps.fit(im, (W0 // 4, H0 // 4), Image.BILINEAR).filter(ImageFilter.GaussianBlur(10))
     fondo = Image.fromarray((np.asarray(fondo.resize((W0, H0), Image.BICUBIC), np.float32) * 0.38).astype(np.uint8))
     alto = int(H0 * 0.92)
     ancho = min(int(alto * r), int(W0 * 0.8))
+    # una imagen pequeña no se agranda más de 3,5 veces: mejor más chica que borrosa
+    ancho = min(ancho, int(im.width * 3.5))
     alto = int(ancho / r)
     fig = im.resize((ancho, alto), Image.LANCZOS)
     x, y = (W0 - ancho) // 2, (H0 - alto) // 2
