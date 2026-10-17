@@ -57,10 +57,11 @@ def imagen(nombre, desenfoque=0):
         if desenfoque:
             im = imagen(nombre).filter(ImageFilter.GaussianBlur(desenfoque))
             im = Image.fromarray((np.asarray(im, np.float32) * 0.42).astype(np.uint8))
-        elif nombre.startswith("foto:"):
-            ruta = FT.ruta_prep(nombre[5:])
         else:
-            ruta = (MP.generar(nombre) if nombre in MP.MAPAS else IL.generar(nombre))
+            if nombre.startswith("foto:"):
+                ruta = FT.ruta_prep(nombre[5:])
+            else:
+                ruta = (MP.generar(nombre) if nombre in MP.MAPAS else IL.generar(nombre))
             im = Image.open(ruta).convert("RGB")
         _img[clave] = im
     return _img[clave]

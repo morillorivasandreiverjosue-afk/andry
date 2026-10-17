@@ -1,64 +1,225 @@
 {
- "_nota": "Escena (índice en linea.json) -> archivos de Wikimedia Commons. Si hay varios, se alternan dentro de la escena.",
- "4":  ["Fachada de la casa natal del libertador, Caracas (24487593424).jpg"],
- "5":  ["José Gil de Castro - Simón Bolívar - Google Art Project.jpg"],
- "6":  ["Paso del ejército del Libertador por el Páramo de Pisba.jpg", "Batalla de Boyaca de Martin Tovar y Tovar.jpg"],
- "7":  ["Portrait of Simón Bolívar by Arturo Michelena.jpg"],
- "8":  ["El Libertador (Bolívar diplomático) 1860 000.jpg"],
- "11": ["Casa de la hacienda de la familia Bolívar en San Mateo, estado Aragua, Venezuela.jpg", "Ingenio Bolívar, San Mateo.jpg"],
- "12": ["Casa natal del Libertador de América 5.JPG", "Ingenio Bolivar, edo. Aragua.jpg"],
- "13": ["Andres Bello-Quinsac.jpg", "Simón Rodríguez 3.jpg"],
- "14": ["Casa Natal del Libertador Caracas centro.JPG"],
- "16": ["Simón Bolívar, 1800.jpg", "Casa Natal del Libertador Simón Bolivar.JPG"],
- "19": ["Matrimonio de Simón Bolívar by Tito Salas, 1921.jpg"],
- "20": ["Royal George Kingston Harbour.jpg"],
- "24": ["Bolívar, por Salguero - 1908 (Museo Casa de Sucre).jpg", "Juan Antonio Michelena 1859 000.jpg", "Dulima desde Kumanday.jpg"],
- "28": ["19 de abril de 1810.jpg"],
- "32": ["Francisco de Miranda by Tovar y Tovar.jpg"],
- "34": ["Castillo libertador.JPG"],
- "35": ["Miranda en la Carraca by Arturo Michelena.jpg", "Murallas, Cartagena de indias Colombia-2008 04.jpg"],
- "39": ["Murallas, Cartagena de indias Colombia-2008 05.jpg"],
- "43": ["José Tomás Boves.jpg"],
- "44": ["José Tomás Boves 2.jpg", "Llanos3.jpg"],
- "47": ["Royal George Kingston Harbour.jpg"],
- "52": ["Alexandre Sabés Pétion Portrait circa 1807-1818 JCB.jpg"],
- "53": ["Expedición de los Cayos Tito Salas.jpg"],
- "56": ["Ciudad Bolívar 2003 023.jpg"],
- "57": ["Jose Antonio Páez restored.jpg", "Alphons Stübel llanero de Casanare.png"],
- "58": ["Llanos3.jpg", "Alphons Stübel llanero de Casanare.png"],
- "59": ["Cogreso de Angostura.jpg"],
- "60": ["Paso del Libertador por el páramo de Pisba.JPG", "Los Picachos.jpg"],
- "63": ["Paso del ejército del Libertador por el Páramo de Pisba.jpg"],
- "64": ["Batalla de Boyaca de Martin Tovar y Tovar.jpg"],
- "66": ["Martin Tovar y Tovar 11.JPG", "Puente de Boyacá 1.jpg"],
- "67": ["Constitución política de Colombia de 1821.jpg"],
- "75": ["Templo Histórico en Cúcuta.JPG", "Constitución política de Colombia de 1821.jpg"],
- "77": ["Boceto para la Batalla de Carabobo by Martín Tovar y Tovar.jpg"],
- "78": ["Martin Tovar y Tovar 10.JPG", "Boceto para la Batalla de Carabobo by Martín Tovar y Tovar.jpg"],
- "80": ["Batalla de Carabobo.JPG"],
- "82": ["Antonio José de Sucre (MCDS).jpg"],
- "83": ["Armisticio de la batalla de Pichincha - Antonio Salas (siglo XIX).jpg"],
- "85": ["El Pichincha Volcán en Quito Ecuador.JPG"],
- "87": ["Manuela Sáenz (retrato de la época).jpg", "Manuela Saenz 1825.jpg"],
- "89": ["Entrevista de Guayaquil.jpg", "Retrato más canónico de José de San Martín.jpg"],
- "91": ["Guayaquil LaRotonda Bolivar SanMartin.JPG"],
- "97": ["Batalla de Junin David Osorio.png"],
- "99": ["Batalla de Ayacucho by Martín Tovar y Tovar (1827 - 1902).jpg"],
- "100": ["Martin Tovar y Tovar 01.JPG"],
- "101": ["Antonio José de Sucre - Presidente de Bolivia.png", "Antonio José de Sucre (pintura ecuestre).jpg", "Cerro Rico over Potosí, Bolivia.jpg"],
- "104": ["Simon-Bolivar - Gil de Castro.jpg"],
- "107": ["Simón Bolívar, por Toro Moreno - 1928 (Museo Casa de Sucre).jpg"],
- "115": ["Arturo Michelena 37.JPG"],
- "118": ["Jose Antonio Páez.jpg"],
- "122": ["Manuela saenz.jpg"],
- "133": ["Arturo Michelena 42.JPG"],
- "134": ["Puente en el jardín de la Quinta de San Pedro Alejandrino. Santa Marta. Colombia.JPG"],
- "135": ["La Muerte del Libertador - Antonio Herrera Toro.jpg"],
- "136": ["Atardecer en Santa Marta, Colombia - 1.jpg"],
- "138": ["Estatua ecuestre de Simón Bolívar en la plaza Bolívar de Caracas.jpg"],
- "140": ["Juan Antonio Michelena 1859 000.jpg"],
- "142": ["Panteon Nacional de Caracas.jpg"],
- "143": ["EstatuaEcuestreSimonBolivarPlazaBolivar.JPG", "Techo del Panteón Nacional, Caracas..JPG"],
- "148": ["Portrait of Simón Bolívar by Arturo Michelena.jpg", "Estatua ecuestre de Bolívar.jpg"],
- "151": ["José Gil de Castro - Simón Bolívar - Google Art Project.jpg"]
+ "_nota": "Escena (índice en linea.json) -> archivos de Wikimedia Commons. Si hay varios, se alternan dentro de la escena; los que no estén descargados se omiten.",
+ "4": [
+  "Fachada de la casa natal del libertador, Caracas (24487593424).jpg"
+ ],
+ "5": [
+  "José Gil de Castro - Simón Bolívar - Google Art Project.jpg"
+ ],
+ "6": [
+  "Paso del ejército del Libertador por el Páramo de Pisba.jpg",
+  "Batalla de Boyaca de Martin Tovar y Tovar.jpg"
+ ],
+ "7": [
+  "Portrait of Simón Bolívar by Arturo Michelena.jpg"
+ ],
+ "8": [
+  "El Libertador (Bolívar diplomático) 1860 000.jpg"
+ ],
+ "11": [
+  "Casa de la hacienda de la familia Bolívar en San Mateo, estado Aragua, Venezuela.jpg",
+  "Ingenio Bolívar, San Mateo.jpg"
+ ],
+ "12": [
+  "Casa natal del Libertador de América 5.JPG",
+  "Ingenio Bolivar, edo. Aragua.jpg",
+  "Simón Bolívar, 1800.jpg"
+ ],
+ "13": [
+  "Andres Bello-Quinsac.jpg",
+  "Simón Rodríguez 3.jpg"
+ ],
+ "14": [
+  "Casa Natal del Libertador Caracas centro.JPG",
+  "Fachada de la casa natal del libertador, Caracas (24487593424).jpg"
+ ],
+ "16": [
+  "Simón Bolívar, 1800.jpg",
+  "Casa Natal del Libertador Simón Bolivar.JPG"
+ ],
+ "19": [
+  "Matrimonio de Simón Bolívar by Tito Salas, 1921.jpg"
+ ],
+ "20": [
+  "Royal George Kingston Harbour.jpg"
+ ],
+ "24": [
+  "Bolívar, por Salguero - 1908 (Museo Casa de Sucre).jpg",
+  "Juan Antonio Michelena 1859 000.jpg",
+  "Dulima desde Kumanday.jpg",
+  "Portrait of Simón Bolívar by Arturo Michelena.jpg",
+  "El Libertador (Bolívar diplomático) 1860 000.jpg"
+ ],
+ "28": [
+  "19 de abril de 1810.jpg"
+ ],
+ "32": [
+  "Francisco de Miranda by Tovar y Tovar.jpg"
+ ],
+ "34": [
+  "Castillo libertador.JPG"
+ ],
+ "35": [
+  "Miranda en la Carraca by Arturo Michelena.jpg",
+  "Murallas, Cartagena de indias Colombia-2008 04.jpg"
+ ],
+ "39": [
+  "Murallas, Cartagena de indias Colombia-2008 05.jpg"
+ ],
+ "43": [
+  "José Tomás Boves.jpg"
+ ],
+ "44": [
+  "José Tomás Boves 2.jpg",
+  "Llanos3.jpg"
+ ],
+ "47": [
+  "Royal George Kingston Harbour.jpg"
+ ],
+ "52": [
+  "Alexandre Sabés Pétion Portrait circa 1807-1818 JCB.jpg"
+ ],
+ "53": [
+  "Expedición de los Cayos Tito Salas.jpg"
+ ],
+ "56": [
+  "Ciudad Bolívar 2003 023.jpg"
+ ],
+ "57": [
+  "Jose Antonio Páez restored.jpg",
+  "Alphons Stübel llanero de Casanare.png"
+ ],
+ "58": [
+  "Llanos3.jpg",
+  "Alphons Stübel llanero de Casanare.png"
+ ],
+ "59": [
+  "Cogreso de Angostura.jpg"
+ ],
+ "60": [
+  "Paso del Libertador por el páramo de Pisba.JPG",
+  "Los Picachos.jpg",
+  "Paso del ejército del Libertador por el Páramo de Pisba.jpg"
+ ],
+ "63": [
+  "Paso del ejército del Libertador por el Páramo de Pisba.jpg"
+ ],
+ "64": [
+  "Batalla de Boyaca de Martin Tovar y Tovar.jpg"
+ ],
+ "66": [
+  "Martin Tovar y Tovar 11.JPG",
+  "Puente de Boyacá 1.jpg",
+  "Batalla de Boyaca de Martin Tovar y Tovar.jpg"
+ ],
+ "67": [
+  "Constitución política de Colombia de 1821.jpg"
+ ],
+ "75": [
+  "Templo Histórico en Cúcuta.JPG",
+  "Constitución política de Colombia de 1821.jpg"
+ ],
+ "77": [
+  "Boceto para la Batalla de Carabobo by Martín Tovar y Tovar.jpg"
+ ],
+ "78": [
+  "Martin Tovar y Tovar 10.JPG",
+  "Boceto para la Batalla de Carabobo by Martín Tovar y Tovar.jpg"
+ ],
+ "80": [
+  "Batalla de Carabobo.JPG",
+  "Boceto para la Batalla de Carabobo by Martín Tovar y Tovar.jpg"
+ ],
+ "82": [
+  "Antonio José de Sucre (MCDS).jpg"
+ ],
+ "83": [
+  "Armisticio de la batalla de Pichincha - Antonio Salas (siglo XIX).jpg",
+  "Antonio José de Sucre (MCDS).jpg"
+ ],
+ "85": [
+  "El Pichincha Volcán en Quito Ecuador.JPG"
+ ],
+ "87": [
+  "Manuela Sáenz (retrato de la época).jpg",
+  "Manuela Saenz 1825.jpg"
+ ],
+ "89": [
+  "Entrevista de Guayaquil.jpg",
+  "Retrato más canónico de José de San Martín.jpg"
+ ],
+ "91": [
+  "Guayaquil LaRotonda Bolivar SanMartin.JPG"
+ ],
+ "97": [
+  "Batalla de Junin David Osorio.png"
+ ],
+ "99": [
+  "Batalla de Ayacucho by Martín Tovar y Tovar (1827 - 1902).jpg"
+ ],
+ "100": [
+  "Martin Tovar y Tovar 01.JPG"
+ ],
+ "101": [
+  "Antonio José de Sucre - Presidente de Bolivia.png",
+  "Antonio José de Sucre (pintura ecuestre).jpg",
+  "Cerro Rico over Potosí, Bolivia.jpg",
+  "Antonio José de Sucre (MCDS).jpg",
+  "Batalla de Ayacucho by Martín Tovar y Tovar (1827 - 1902).jpg"
+ ],
+ "104": [
+  "Simon-Bolivar - Gil de Castro.jpg",
+  "José Gil de Castro - Simón Bolívar - Google Art Project.jpg"
+ ],
+ "107": [
+  "Simón Bolívar, por Toro Moreno - 1928 (Museo Casa de Sucre).jpg",
+  "El Libertador (Bolívar diplomático) 1860 000.jpg"
+ ],
+ "115": [
+  "Arturo Michelena 37.JPG",
+  "Portrait of Simón Bolívar by Arturo Michelena.jpg"
+ ],
+ "118": [
+  "Jose Antonio Páez.jpg",
+  "Jose Antonio Páez restored.jpg"
+ ],
+ "122": [
+  "Manuela saenz.jpg",
+  "Manuela Sáenz (retrato de la época).jpg"
+ ],
+ "133": [
+  "Arturo Michelena 42.JPG",
+  "Antonio José de Sucre (MCDS).jpg"
+ ],
+ "134": [
+  "Puente en el jardín de la Quinta de San Pedro Alejandrino. Santa Marta. Colombia.JPG"
+ ],
+ "135": [
+  "La Muerte del Libertador - Antonio Herrera Toro.jpg"
+ ],
+ "136": [
+  "Atardecer en Santa Marta, Colombia - 1.jpg"
+ ],
+ "138": [
+  "Estatua ecuestre de Simón Bolívar en la plaza Bolívar de Caracas.jpg"
+ ],
+ "140": [
+  "Juan Antonio Michelena 1859 000.jpg",
+  "José Gil de Castro - Simón Bolívar - Google Art Project.jpg"
+ ],
+ "142": [
+  "Panteon Nacional de Caracas.jpg"
+ ],
+ "143": [
+  "EstatuaEcuestreSimonBolivarPlazaBolivar.JPG",
+  "Techo del Panteón Nacional, Caracas..JPG",
+  "Estatua ecuestre de Simón Bolívar en la plaza Bolívar de Caracas.jpg"
+ ],
+ "148": [
+  "Portrait of Simón Bolívar by Arturo Michelena.jpg",
+  "Estatua ecuestre de Bolívar.jpg"
+ ],
+ "151": [
+  "José Gil de Castro - Simón Bolívar - Google Art Project.jpg"
+ ]
 }
