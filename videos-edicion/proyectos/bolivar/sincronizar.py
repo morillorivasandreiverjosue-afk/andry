@@ -10,6 +10,7 @@ Uso (desde proyectos/bolivar/):
   python3 sincronizar.py
 """
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -21,13 +22,23 @@ AQUI = Path(__file__).resolve().parent
 AUDIO = AQUI.parent.parent / "narracion" / "proyectos" / "bolivar" / "audio"
 SR = 44100
 ENTRE_CAPITULOS = 1.5
+OBJETIVO_LUFS = -23.0  # misma sonoridad para todas las partes de la voz
 VENTANA = 0.02  # segundos por cuadro de análisis
 
 
+def sonoridad(ruta):
+    """Sonoridad integrada (LUFS) de un archivo de audio."""
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(ruta), "-af", "ebur128", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    return float(re.findall(r"I:\s+(-?[\d.]+) LUFS", r.stderr)[-1])
+
+
 def cargar(ruta):
-    r = subprocess.run(["ffmpeg", "-v", "error", "-i", str(ruta), "-ac", "1", "-ar", str(SR), "-f", "s16le", "-"],
-                       capture_output=True, check=True)
-    return np.frombuffer(r.stdout, np.int16).astype(np.float32) / 32768
+    """Audio mono a SR, llevado a OBJETIVO_LUFS para que todas las partes suenen igual de fuertes."""
+    ganancia = OBJETIVO_LUFS - sonoridad(ruta)
+    r = subprocess.run(["ffmpeg", "-v", "error", "-i", str(ruta), "-af", f"volume={ganancia:.2f}dB", "-ac", "1",
+                        "-ar", str(SR), "-f", "f32le", "-"], capture_output=True, check=True)
+    return np.frombuffer(r.stdout, np.float32).copy()
 
 
 def silencios(x, minimo=0.18):
