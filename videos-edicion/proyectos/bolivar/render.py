@@ -20,6 +20,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
+import fotos as FT
 import ilustraciones as IL
 import mapas as MP
 
@@ -34,6 +35,9 @@ CREMA = (240, 228, 200)
 LINEA = json.loads((BUILD / "linea.json").read_text(encoding="utf-8"))
 ESCENAS = LINEA["escenas"]
 TODAS_FRASES = [f for e in ESCENAS for f in e.get("frases", [])]
+# obras de Wikimedia por escena (solo las ya descargadas por fotos.py)
+FOTOS = {i: ["foto:" + t for t in v if FT.ruta_prep(t).exists()] for i, v in FT.mapa().items()}
+FOTOS = {i: v for i, v in FOTOS.items() if v}
 
 
 def fuente(clave, tam):
@@ -53,6 +57,8 @@ def imagen(nombre, desenfoque=0):
         if desenfoque:
             im = imagen(nombre).filter(ImageFilter.GaussianBlur(desenfoque))
             im = Image.fromarray((np.asarray(im, np.float32) * 0.42).astype(np.uint8))
+        elif nombre.startswith("foto:"):
+            ruta = FT.ruta_prep(nombre[5:])
         else:
             ruta = (MP.generar(nombre) if nombre in MP.MAPAS else IL.generar(nombre))
             im = Image.open(ruta).convert("RGB")
@@ -74,12 +80,12 @@ def viñeta_y_grano():
 def visual_de(i):
     e = ESCENAS[i]
     if e["tipo"] == "plano":
-        return e["visual"]
+        return FOTOS[i][0] if i in FOTOS else e["visual"]
     if e["tipo"] == "portada":
         return "andes"
-    for f in ESCENAS[i + 1:]:
-        if f["tipo"] == "plano":
-            return f["visual"]
+    for j in range(i + 1, len(ESCENAS)):
+        if ESCENAS[j]["tipo"] == "plano":
+            return visual_de(j)
     return "retrato"
 
 
@@ -175,8 +181,8 @@ def textura_efecto(tipo):
     return _tex[tipo]
 
 
-def efectos(im, nombre, T):
-    activos = [k for k, v in EFECTOS.items() if nombre in v]
+def efectos(im, nombre, T, quitar=()):
+    activos = [k for k, v in EFECTOS.items() if nombre in v and k not in quitar]
     if not activos:
         return im
     im = im.convert("RGBA")
@@ -225,6 +231,21 @@ def visual(i, t):
     dur = e["fin"] - e["inicio"]
     nombre = visual_de(i)
     es_mapa = nombre in MP.MAPAS and e["tipo"] == "plano"
+    if e["tipo"] == "plano" and i in FOTOS:
+        # varias obras en la escena: cada una ocupa un tramo igual, con fundido entre ellas
+        lista = FOTOS[i]
+        tramo = dur / len(lista)
+        k = min(int(t // tramo), len(lista) - 1)
+
+        def obra(k, tl):
+            caja = ken_burns(i * 31 + k, tl, tramo + FUNDIDO, False)
+            return imagen(lista[k]).resize((W, H), Image.BICUBIC, box=caja)
+
+        im = obra(k, t - k * tramo)
+        if k > 0 and t - k * tramo < FUNDIDO:
+            im = Image.blend(obra(k - 1, t - (k - 1) * tramo), im, ease((t - k * tramo) / FUNDIDO))
+        # sobre fotos y pinturas no van las brasas ni el parpadeo de vela de las ilustraciones
+        return efectos(im, e["visual"], e["inicio"] + t, quitar=("brasas", "parpadeo"))
     if e["tipo"] == "plano":
         base = imagen(nombre)
         if es_mapa:

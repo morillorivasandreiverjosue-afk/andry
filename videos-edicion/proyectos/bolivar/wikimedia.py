@@ -9,8 +9,7 @@ UA = "BolivarDocumental/1.0 (video educativo; descarga puntual de obras de domin
 _ultimo = [0.0]
 
 
-def _get(url, binario=False, intentos=8):
-    espera = 4
+def _get(url, binario=False, intentos=8, espera=4, tope=60):
     for _ in range(intentos):
         pausa = 1.5 - (time.time() - _ultimo[0])
         if pausa > 0:
@@ -27,7 +26,7 @@ def _get(url, binario=False, intentos=8):
         except (urllib.error.URLError, TimeoutError, ConnectionError):
             pass
         time.sleep(espera)
-        espera = min(espera * 2, 60)
+        espera = min(espera * 2, tope)
     raise RuntimeError(f"Wikimedia no respondió: {url}")
 
 
@@ -58,5 +57,19 @@ def info(titulos, ancho=2400):
     return out
 
 
-def descargar(url):
-    return _get(url, binario=True)
+def url_descarga(m, ancho=1920):
+    """URL de una miniatura en tamaño estándar (lo que pide Wikimedia) o el original si es más pequeño."""
+    # thumb.wikimedia.org no está permitido en este entorno: las mismas rutas sirven desde upload.wikimedia.org
+    base = m["url"].split("?")[0].replace("://thumb.wikimedia.org/", "://upload.wikimedia.org/")
+    if m["ancho"] <= ancho:
+        return base
+    if "/thumb/" not in base:
+        dir_, nombre = base.rsplit("/", 1)
+        return f"{dir_.replace('/commons/', '/commons/thumb/')}/{nombre}/{ancho}px-{nombre}"
+    dir_, nombre = base.rsplit("/", 1)
+    return f"{dir_}/{ancho}px-{dir_.rsplit('/', 1)[1]}"
+
+
+def descargar(m):
+    # el servidor de imágenes limita mucho por IP: esperas largas antes de rendirse
+    return _get(url_descarga(m), binario=True, intentos=14, espera=15, tope=180)
