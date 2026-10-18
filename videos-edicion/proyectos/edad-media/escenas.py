@@ -23,7 +23,12 @@ SANGRE = (200, 40, 30)
 
 @lru_cache(None)
 def pintura(nombre):
-    return Image.open(IMAGENES / f"{nombre}.jpg").convert("RGB")
+    """La pintura descargada si existe; si no, la ilustración dibujada con código."""
+    ruta = IMAGENES / f"{nombre}.jpg"
+    if ruta.exists():
+        return Image.open(ruta).convert("RGB")
+    from ilustraciones import ESCENAS
+    return ESCENAS[nombre]().convert("RGB")
 
 
 def ken_burns(nombre, t, d, foco=(0.5, 0.5), z=(1.0, 1.15), pan=(0.0, 0.0)):
