@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 from guion import ESCENAS
 
@@ -26,6 +26,7 @@ FH = 1240                      # alto de la imagen principal
 FY = 250                       # posición vertical de la imagen principal
 FUNDIDO = 0.6                  # fundido entre imágenes
 MARCA = "CURIOSIDADES DEL MUNDO"
+FOCO = {"05_mehmed_tienda": 0.72, "04_mehmed_entrada": 0.33}  # centro horizontal del personaje
 FUENTES = AQUI.parent / "napoleon" / "fuentes"
 
 
@@ -51,6 +52,8 @@ def linea_de_tiempo(voz):
         t += 0.15
         escenas.append({"ini": ini, "fin": t - 0.2, "imagenes": escena["imagenes"], "musica": escena["musica"]})
     fin_voz = frases[-1]["fin"]
+    global DURACION
+    DURACION = max(DURACION, round(fin_voz + 2.2, 1))  # deja sitio al cierre si la voz es más larga
     escenas[-1]["fin"] = DURACION
     for a, b in zip(escenas, escenas[1:]):
         a["fin"] = b["ini"]
@@ -66,6 +69,8 @@ def linea_de_tiempo(voz):
 
 def trozos(frase):
     """Parte una frase en los trozos marcados con « | » en el guion, repartiendo su duración."""
+    if "trozos" in frase:  # tiempos exactos por palabra (1b_voz_externa.py)
+        return [{**t, "ini": frase["ini"] + t["ini"], "fin": frase["ini"] + t["fin"]} for t in frase["trozos"]]
     textos = frase["texto"].split(" | ")
     pesos = np.array([len(x) + 4 for x in textos], float)
     limites = frase["ini"] + np.concatenate([[0], np.cumsum(pesos)]) / pesos.sum() * frase["dur"]
@@ -133,12 +138,31 @@ def mapa():
     return img.convert("RGB")
 
 
+def mejorar(img, alto):
+    """Sube la resolución por pasos con realce, limpia artefactos JPEG y da un etalonaje cinematográfico."""
+    img = img.filter(ImageFilter.GaussianBlur(0.5))           # suaviza bloques de compresión
+    while img.height < alto:
+        f = min(1.5, alto / img.height)
+        img = img.resize((round(img.width * f), round(img.height * f)), Image.LANCZOS)
+        img = img.filter(ImageFilter.UnsharpMask(1.2, 65, 1))  # recupera bordes en cada paso
+    img = img.resize((round(img.width * alto / img.height), alto), Image.LANCZOS)
+    img = img.filter(ImageFilter.UnsharpMask(18, 22, 0))      # claridad: contraste local
+    img = img.filter(ImageFilter.UnsharpMask(1.0, 55, 2))     # nitidez fina
+    img = ImageEnhance.Contrast(img).enhance(1.07)
+    img = ImageEnhance.Color(img).enhance(1.10)
+    a = np.asarray(img).astype(np.float32) / 255
+    luz = a.mean(2, keepdims=True)
+    # sombras ligeramente frías y luces cálidas (look de cine)
+    tono = (1 - luz) * np.array([-0.012, 0.0, 0.02]) + luz * np.array([0.025, 0.008, -0.02])
+    return Image.fromarray(np.clip((a + tono) * 255, 0, 255).astype(np.uint8))
+
+
 def preparar_imagen(nombre):
     img = mapa() if nombre == "mapa" else sin_bandas(Image.open(AQUI / "imagenes" / f"{nombre}.jpg").convert("RGB"))
     # imagen principal a 1,15x para poder acercar la cámara sin perder definición
     alto = int(FH * 1.15)
-    grande = img.resize((int(img.width * alto / img.height), alto), Image.LANCZOS)
-    grande = grande.filter(ImageFilter.UnsharpMask(2, 60, 2))
+    grande = img.resize((int(img.width * alto / img.height), alto), Image.LANCZOS) if nombre == "mapa" \
+        else mejorar(img, alto)
     # fondo desenfocado y oscuro para rellenar arriba y abajo
     esc = max(W / img.width, H / img.height) * 1.1
     fondo = img.resize((int(img.width * esc), int(img.height * esc)), Image.BILINEAR)
@@ -184,8 +208,11 @@ def cuadro_tramo(tramo, t, indice):
     holgura = max(grande.width - ancho, 0)
     sentido = 1 if indice % 2 == 0 else -1
     x0 = holgura * (0.5 + sentido * (u - 0.5) * 0.9)
+    if tramo["img"] in FOCO:  # mantener al personaje en cuadro con un paneo corto
+        x0 = FOCO[tramo["img"]] * grande.width - ancho / 2 + sentido * (u - 0.5) * 0.25 * ancho
+        x0 = min(max(x0, 0), holgura)
     y0 = (grande.height - alto) * 0.5
-    frente = grande.resize((W, FH), Image.BILINEAR, box=(x0, y0, x0 + ancho, y0 + alto))
+    frente = grande.resize((W, FH), Image.BICUBIC, box=(x0, y0, x0 + ancho, y0 + alto))
     lienzo = fondo.copy()
     lienzo.paste(frente, (0, FY), G["mascara"])
     return np.asarray(lienzo).astype(np.float32)
@@ -227,6 +254,8 @@ def render(i):
         if -0.15 < dt < 0.5:
             arr = arr * (1 + 0.35 * math.exp(-abs(dt - 0.05) * 9))
     arr = arr * G["viñeta"]
+    oy, ox = (i * 7919) % 256, (i * 104729) % 256
+    arr = arr + G["grano"][oy:oy + H, ox:ox + W]
     img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
     d = ImageDraw.Draw(img, "RGBA")
 
@@ -355,8 +384,9 @@ def main():
     subs = [s for f in frases for s in trozos(f)]
     G.update(frases=frases, escenas=escenas, tramos=tramos, fin_voz=fin_voz, subs=subs,
              mascara=mascara_imagen(), viñeta=viñeta(),
+             grano=np.random.default_rng(1453).normal(0, 3.2, (H + 256, W + 256, 1)).astype(np.float32),
              imgs={n: preparar_imagen(n) for n in {tr["img"] for tr in tramos}})
-    print(f"Voz termina en {fin_voz:.2f} s; escenas:", [round(e["ini"], 2) for e in escenas])
+    print(f"Duración {DURACION} s; voz termina en {fin_voz:.2f} s; escenas:", [round(e["ini"], 2) for e in escenas])
     total = int(DURACION * FPS)
     if args.cuadros:
         (salida / "prueba").mkdir(exist_ok=True)
@@ -369,8 +399,9 @@ def main():
     video = salida / "Caida_de_Constantinopla.mp4"
     ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                            "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-i", str(wav),
-                           "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
-                           "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+                           "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-tune", "film", "-profile:v", "high",
+                           "-pix_fmt", "yuv420p",
+                           "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
                            "-movflags", "+faststart", "-shortest", str(video)], stdin=subprocess.PIPE)
     with Pool(args.procesos) as pool:
         for i, datos in enumerate(pool.imap(render, range(total), chunksize=8)):
