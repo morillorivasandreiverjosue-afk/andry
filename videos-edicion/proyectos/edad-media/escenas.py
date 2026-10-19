@@ -31,11 +31,49 @@ def pintura(nombre):
     return ESCENAS[nombre]().convert("RGB")
 
 
+def a_lo_ancho(img, k, foco, z, pan):
+    """Foto horizontal pequeña: entera a lo ancho sobre un fondo desenfocado de sí misma (estilo TikTok)."""
+    iw, ih = img.size
+    zoom = z[0] + (z[1] - z[0]) * k
+    fh = int(min(1300, max(800, W / (iw / ih) * 1.4)))       # alto del recorte en pantalla
+    ch = min(ih, iw * fh / W) / zoom
+    cw = ch * W / fh
+    cx = min(max((foco[0] + pan[0] * (k - 0.5)) * iw, cw / 2), iw - cw / 2)
+    cy = min(max((foco[1] + pan[1] * (k - 0.5)) * ih, ch / 2), ih - ch / 2)
+    fondo = _fondo_borroso(id(img), img)
+    fondo = fondo.resize((int(W * (1.05 + 0.05 * k)), int(H * (1.05 + 0.05 * k))), Image.BILINEAR)
+    lienzo = fondo.crop(((fondo.width - W) // 2, (fondo.height - H) // 2, (fondo.width + W) // 2, (fondo.height + H) // 2))
+    frente = img.resize((W, fh), Image.LANCZOS, box=(cx - cw / 2, cy - ch / 2, cx + cw / 2, cy + ch / 2))
+    frente = frente.filter(ImageFilter.UnsharpMask(2, 60, 2))
+    mascara = np.ones((fh, 1), np.float32)
+    borde = 90
+    mascara[:borde, 0] = np.linspace(0, 1, borde)
+    mascara[-borde:, 0] = np.linspace(1, 0, borde)
+    m = Image.fromarray((np.broadcast_to(mascara, (fh, W)) * 255).astype(np.uint8))
+    lienzo.paste(frente, (0, 980 - fh // 2), m)
+    return lienzo
+
+
+_BORROSOS = {}
+
+
+def _fondo_borroso(clave, img):
+    if clave not in _BORROSOS:
+        iw, ih = img.size
+        cw = ih * W / H
+        f = img.crop(((iw - cw) / 2, 0, (iw + cw) / 2, ih)).resize((W // 4, H // 4), Image.BILINEAR)
+        f = f.filter(ImageFilter.GaussianBlur(10)).resize((W, H), Image.BILINEAR)
+        _BORROSOS[clave] = Image.fromarray((np.asarray(f).astype(np.float32) * 0.45).astype(np.uint8))
+    return _BORROSOS[clave]
+
+
 def ken_burns(nombre, t, d, foco=(0.5, 0.5), z=(1.0, 1.15), pan=(0.0, 0.0)):
     """Encuadre vertical 9:16 que se acerca (zoom) y se desplaza (pan) sobre la pintura."""
     img = pintura(nombre)
     iw, ih = img.size
     k = ease(t / d) if d > 0 else 0
+    if nombre.startswith("usuario_") and iw / ih > 0.75:
+        return a_lo_ancho(img, k, foco, z, pan)
     zoom = z[0] + (z[1] - z[0]) * k
     base_h = min(ih, iw * H / W)              # el recorte 9:16 más grande que cabe
     ch = base_h / zoom
@@ -191,13 +229,13 @@ def plano_pintura(nombre, foco, z, pan=(0, 0), etiqueta=None, sub=None, y=330, t
         if etiqueta:
             img = titulo(img, t, etiqueta, y, tam, color=color, aparece=aparece, f=f, sub=sub)
         return img.convert("RGB")
-    plano.__name__ = f"p_{nombre}"
+    plano.__name__ = f"p_{etiqueta.lower().split()[0] if etiqueta else nombre}"
     return plano
 
 
 def p_destruccion(t, d):
     """476: la caída del Imperio romano de Occidente."""
-    img = ken_burns("destruccion", t, d, foco=(0.40, 0.5), z=(1.15, 1.35), pan=(0.35, 0))
+    img = ken_burns("usuario_7", t, d, foco=(0.5, 0.5), z=(1.0, 1.2), pan=(0.2, 0))
     img = brasas(niebla(oscurecer_abajo(img, 0.55), t, 0.3, (120, 110, 100)), t, 90)
     n = int(476 * ease_out(t / 1.3)) if t < 1.3 else 476
     img = titulo(img, t, f"AÑO {n}", 330, 140, color=ORO, aparece=0.0, sub="d. C.")
@@ -316,8 +354,8 @@ def p_ciencia(t, d):
 
 
 def p_final(t, d):
-    img = ken_burns("regreso", 2.5 + t * 0.4, 6, foco=(0.55, 0.45), z=(1.2, 1.4))
-    a = np.asarray(img).astype(np.float32) * 0.32
+    img = ken_burns("usuario_8", 2.5 + t * 0.4, 6, foco=(0.5, 0.5), z=(1.0, 1.1))
+    a = np.asarray(img).astype(np.float32) * 0.6
     img = Image.fromarray(a.astype(np.uint8))
     img = brasas(img, t, 80)
     img = titulo(img, t, "CURIOSIDADES", 860, 110, color=BLANCO, aparece=0.1, f="titulo")
@@ -336,7 +374,7 @@ def p_final(t, d):
 
 
 def p_bienvenidos(t, d):
-    img = ken_burns("accolade", t, d, foco=(0.5, 0.45), z=(1.12, 1.0))
+    img = ken_burns("usuario_6", t, d, foco=(0.5, 0.5), z=(1.12, 1.0))
     img = brasas(niebla(oscurecer_abajo(img, 0.55), t, 0.25), t, 70)
     img = titulo(img, t, "BIENVENIDOS A LA", 290, 64, aparece=0.0)
     img = titulo(img, t, "EDAD MEDIA", 400, 130, color=ORO, aparece=0.3)
@@ -345,7 +383,7 @@ def p_bienvenidos(t, d):
 
 def p_mil_anios(t, d):
     """Y esta es solo una pequeña parte… de una época que duró cerca de mil años."""
-    img = ken_burns("regreso", t, d, foco=(0.5, 0.5), z=(1.0, 1.25), pan=(0.1, 0))
+    img = ken_burns("usuario_1", t, d, foco=(0.5, 0.35), z=(1.0, 1.2), pan=(0, -0.1))
     img = brasas(niebla(oscurecer_abajo(img, 0.55), t, 0.25), t, 70)
     n = int(1000 * ease_out((t - 2.6) / 2.0)) if t > 2.6 else 0
     if t > 2.6:
@@ -357,22 +395,22 @@ def p_mil_anios(t, d):
 PLANOS = [
     (0.0, p_gancho, {}),
     (3.6, p_vela, {}),
-    (9.3, plano_pintura("schinkel", (0.45, 0.45), (1.05, 1.3), (0.2, 0), "CASTILLOS", "enormes fortalezas", y=330), {}),
-    (12.5, plano_pintura("carlomagno", (0.5, 0.35), (1.0, 1.18), (0, 0.1), "REYES", "poderosos", y=330), {}),
-    (14.3, plano_pintura("godspeed", (0.5, 0.42), (1.0, 1.15), (0, 0.1), "CABALLEROS", "listos para la guerra", y=300, efecto="brasas"), {}),
+    (9.3, plano_pintura("usuario_5", (0.45, 0.5), (1.0, 1.12), (0.15, 0), "CASTILLOS", "enormes fortalezas", y=330), {}),
+    (12.5, plano_pintura("usuario_3", (0.82, 0.5), (1.5, 1.7), (0, 0), "REYES", "poderosos", y=330), {}),
+    (14.3, plano_pintura("usuario_2", (0.45, 0.5), (1.0, 1.15), (0.1, 0), "CABALLEROS", "listos para la guerra", y=300, efecto="brasas"), {}),
     (17.5, p_bienvenidos, {}),
     (20.0, p_destruccion, {}),
     (28.7, p_linea_tiempo, {}),
     (33.2, p_piramide, {}),
     (37.7, plano_pintura("enero", (0.5, 0.62), (1.05, 1.3), (0, -0.1), "RIQUEZAS", "reyes y nobles", y=330, color=ORO), {}),
     (41.9, plano_pintura("junio", (0.5, 0.75), (1.1, 1.3), (0.15, 0), "EL CAMPO", "trabajar para sobrevivir", y=330), {}),
-    (46.1, plano_pintura("octubre", (0.5, 0.35), (1.3, 1.6), (0, -0.05), "FORTALEZAS", "residencia y defensa", y=330), {}),
+    (46.1, plano_pintura("usuario_10", (0.5, 0.5), (1.0, 1.15), (0, 0), "FORTALEZAS", "residencia y defensa", y=330), {}),
     (51.2, plano_pintura("torneo", (0.5, 0.62), (1.05, 1.25), (0, 0), "ENTRENAMIENTO", "torneos y justas", y=300, tam=86), {}),
-    (53.6, plano_pintura("san_romano", (0.45, 0.5), (1.1, 1.35), (0.3, 0), "GUERRAS", "que cambiaban reinos", y=330, color=(255, 120, 90), efecto="brasas"), {"sacudida": True}),
+    (53.6, plano_pintura("usuario_9", (0.5, 0.5), (1.0, 1.2), (0.15, 0), "GUERRAS", "que cambiaban reinos", y=330, color=(255, 120, 90), efecto="brasas"), {"sacudida": True}),
     (57.8, plano_pintura("ciudad", (0.35, 0.55), (1.1, 1.3), (0.3, 0), "MERCADOS", "comercio y vida en la ciudad", y=330, aparece=3.0), {"amanecer": True}),
     (62.6, plano_pintura("universidad", (0.5, 0.5), (1.05, 1.2), (0, 0), "UNIVERSIDADES", None, y=330, tam=86), {}),
     (63.8, p_ciencia, {}),
-    (65.5, plano_pintura("catedral", (0.5, 0.45), (1.05, 1.25), (0, 0.1), "CATEDRALES", "grandes construcciones", y=330, tam=90), {}),
+    (65.5, plano_pintura("usuario_4", (0.5, 0.5), (1.0, 1.15), (0, 0), "CONSTRUCCIONES", "castillos y catedrales", y=330, tam=84), {}),
     (67.4, plano_pintura("kells", (0.5, 0.45), (1.05, 1.2), (0, 0), "CULTURA", "arte y manuscritos", y=330, color=ORO), {}),
     (69.0, p_mil_anios, {}),
     (75.6, p_final, {}),
