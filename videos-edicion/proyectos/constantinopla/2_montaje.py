@@ -27,6 +27,7 @@ FY = 250                       # posición vertical de la imagen principal
 FUNDIDO = 0.6                  # fundido entre imágenes
 MARCA = "CURIOSIDADES DEL MUNDO"
 FOCO = {"05_mehmed_tienda": 0.72, "04_mehmed_entrada": 0.33}  # centro horizontal del personaje
+FOCO = {"05_mehmed_tienda": 0.72, "04_mehmed_entrada": 0.33}  # centro horizontal del personaje
 FUENTES = AQUI.parent / "napoleon" / "fuentes"
 
 
@@ -211,6 +212,9 @@ def cuadro_tramo(tramo, t, indice):
     if tramo["img"] in FOCO:  # mantener al personaje en cuadro con un paneo corto
         x0 = FOCO[tramo["img"]] * grande.width - ancho / 2 + sentido * (u - 0.5) * 0.25 * ancho
         x0 = min(max(x0, 0), holgura)
+    if tramo["img"] in FOCO:  # mantener al personaje en cuadro con un paneo corto
+        x0 = FOCO[tramo["img"]] * grande.width - ancho / 2 + sentido * (u - 0.5) * 0.25 * ancho
+        x0 = min(max(x0, 0), holgura)
     y0 = (grande.height - alto) * 0.5
     frente = grande.resize((W, FH), Image.BICUBIC, box=(x0, y0, x0 + ancho, y0 + alto))
     lienzo = fondo.copy()
@@ -384,7 +388,7 @@ def main():
     subs = [s for f in frases for s in trozos(f)]
     G.update(frases=frases, escenas=escenas, tramos=tramos, fin_voz=fin_voz, subs=subs,
              mascara=mascara_imagen(), viñeta=viñeta(),
-             grano=np.random.default_rng(1453).normal(0, 3.2, (H + 256, W + 256, 1)).astype(np.float32),
+             grano=np.random.default_rng(1453).normal(0, 2.0, (H + 256, W + 256, 1)).astype(np.float32),
              imgs={n: preparar_imagen(n) for n in {tr["img"] for tr in tramos}})
     print(f"Duración {DURACION} s; voz termina en {fin_voz:.2f} s; escenas:", [round(e["ini"], 2) for e in escenas])
     total = int(DURACION * FPS)
@@ -399,7 +403,7 @@ def main():
     video = salida / "Caida_de_Constantinopla.mp4"
     ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                            "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-i", str(wav),
-                           "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-tune", "film", "-profile:v", "high",
+                           "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-tune", "film", "-maxrate", "16M", "-bufsize", "32M", "-profile:v", "high",
                            "-pix_fmt", "yuv420p",
                            "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
                            "-movflags", "+faststart", "-shortest", str(video)], stdin=subprocess.PIPE)
