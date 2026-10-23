@@ -30,6 +30,7 @@ Resultado en `salida/`: `Pompeya_Curiosidades_del_Mundo.mp4` (1080×1920, 30 fps
 | `1_voz.py` | Voz en off frase por frase (Kokoro, sin conexión) |
 | `1_voz_elevenlabs.py` | Corta una narración completa de ElevenLabs en frases y sincroniza cada subtítulo con su palabra |
 | `2_montaje.py` | Movimientos de cámara, transiciones, ceniza y piedra pómez, nube oscura, subtítulos, marca del canal, música y efectos (usa `../napoleon/sonido.py`) |
+| `portada.py` | Portada vertical para TikTok, Reels y Shorts (`salida/portada.jpg`) |
 | `fuentes/` | Montserrat, Anton y Cinzel (licencia OFL) |
 
 ## Zona segura de los textos
