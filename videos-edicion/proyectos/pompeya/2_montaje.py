@@ -63,12 +63,13 @@ def linea_de_tiempo(voz):
         for i, it in enumerate(items):
             frases.append((t, it["wav"]))
             frags = guion.fragmentos(it["frase"])
-            pesos = [sum(silabas(p) for p, _ in fr) + (1.2 if fr[-1][0][-1] in ",." else 0) for fr in frags]
-            total, a = sum(pesos), t
-            for fr, p in zip(frags, pesos):
-                b = a + it["dur"] * p / total
-                subs.append([a, b, fr])
-                a = b
+            if "frag_t" in it:  # tiempos reales por palabra (1_voz_elevenlabs.py)
+                bordes = [t + x for x in it["frag_t"]] + [t + it["dur"]]
+            else:  # reparto proporcional a las sílabas
+                pesos = [sum(silabas(p) for p, _ in fr) + (1.2 if fr[-1][0][-1] in ",." else 0) for fr in frags]
+                bordes = [t + it["dur"] * sum(pesos[:k]) / sum(pesos) for k in range(len(frags) + 1)]
+            for k, fr in enumerate(frags):
+                subs.append([bordes[k], bordes[k + 1], fr])
             t += it["dur"] + (PAUSA if i < len(items) - 1 else 0)
         t += PAUSA_ESCENA
         escenas.append((t0, t, escena))

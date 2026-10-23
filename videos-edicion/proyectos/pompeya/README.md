@@ -8,6 +8,9 @@ voz en off, música de suspenso y efectos sintetizados, y subtítulos grandes co
 ```bash
 python3 0_escenas.py ../../modelos salida   # separa y amplía las 12 escenas (≈8 min)
 python3 1_voz.py     ../../modelos salida   # narración con Kokoro (≈1 min)
+# o, con una narración de ElevenLabs (voz «Damián», eleven_v4) y su transcripción con tiempos por palabra:
+# ffmpeg -i toma.mp3 -af atempo=1.12 narracion.mp3
+# python3 1_voz_elevenlabs.py narracion.mp3 palabras.json salida
 python3 2_montaje.py salida                 # audio + video (≈7 min)
 # prueba rápida de un tramo:  python3 2_montaje.py salida --prueba 16 34
 ```
@@ -24,7 +27,8 @@ Resultado en `salida/`: `Pompeya_Curiosidades_del_Mundo.mp4` (1080×1920, 30 fps
 |---|---|
 | `guion.py` | Guion por escenas; `\|` separa los fragmentos de subtítulo y `*palabra*` se resalta en amarillo |
 | `0_escenas.py` | Recorta la cuadrícula 3×4 de `referencia.jpg` y amplía cada imagen ×4 |
-| `1_voz.py` | Voz en off frase por frase |
+| `1_voz.py` | Voz en off frase por frase (Kokoro, sin conexión) |
+| `1_voz_elevenlabs.py` | Corta una narración completa de ElevenLabs en frases y sincroniza cada subtítulo con su palabra |
 | `2_montaje.py` | Movimientos de cámara, transiciones, ceniza y piedra pómez, nube oscura, subtítulos, marca del canal, música y efectos (usa `../napoleon/sonido.py`) |
 | `fuentes/` | Montserrat, Anton y Cinzel (licencia OFL) |
 
