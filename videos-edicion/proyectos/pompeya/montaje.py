@@ -452,9 +452,10 @@ def render_parte(args):
         return str(destino)
     tmp = destino.with_suffix(".tmp.mp4")
     ff = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-                           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "19",
+                           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-b:v", "8M",
+                           "-maxrate", "10M", "-bufsize", "16M",
                            "-pix_fmt", "yuv420p", str(tmp)], stdin=subprocess.PIPE)
-    if nombre.startswith("c"):
+    if nombre[1:].isdigit():
         i = int(nombre[1:])
         extras = {"rotulo": rotulo_capitulo(i, guion_caps[i]["titulo"]),
                   "datos": [(f, tarjeta_dato(tx)) for f, tx in CAPITULOS[i]["datos"]]}
@@ -465,7 +466,7 @@ def render_parte(args):
     n0, n1 = round(t0 * FPS), round(t1 * FPS)
     for n in range(n0, n1):
         t = n / FPS
-        if nombre.startswith("c"):
+        if nombre[1:].isdigit():
             fr = fotograma_capitulo(i, t, plan, extras)
         elif nombre == "intro":
             fr = fotograma_intro(t, extra)
@@ -595,7 +596,8 @@ def main():
     lista = SALIDA / "partes" / "lista.txt"
     lista.write_text("".join(f"file '{n}.mp4'\n" for n, _, _ in partes))
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(lista),
-                    "-i", str(SALIDA / "audio.wav"), "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+                    "-i", str(SALIDA / "audio.wav"), "-c:v", "copy",
+                    "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "48000", "-c:a", "aac", "-b:a", "192k",
                     "-shortest", "-movflags", "+faststart", str(SALIDA / "Pompeya_documental.mp4")], check=True)
     print("Listo:", SALIDA / "Pompeya_documental.mp4")
 
