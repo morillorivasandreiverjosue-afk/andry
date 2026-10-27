@@ -103,13 +103,18 @@ def a_16_9(img):
     return img.resize((ANCHO, ALTO), Image.LANCZOS)
 
 
-collage, salida = Image.open(sys.argv[1]).convert("RGB"), Path(sys.argv[2]) / "imagenes"
-salida.mkdir(parents=True, exist_ok=True)
-sr = superresolucion(Path(sys.argv[3]) if len(sys.argv) > 3 else AQUI.parent.parent / "modelos")
-k = 0
-for y0, y1 in FILAS:
-    for x0, x1 in COLUMNAS:
-        k += 1
-        img = ampliar(borrar_etiqueta(collage.crop((x0, y0, x1, y1))), sr)
-        realzar(a_16_9(img)).save(salida / f"t{k:02d}.png")
-        print(f"imagen {k} lista", flush=True)
+def main():
+    collage, salida = Image.open(sys.argv[1]).convert("RGB"), Path(sys.argv[2]) / "imagenes"
+    salida.mkdir(parents=True, exist_ok=True)
+    sr = superresolucion(Path(sys.argv[3]) if len(sys.argv) > 3 else AQUI.parent.parent / "modelos")
+    k = 0
+    for y0, y1 in FILAS:
+        for x0, x1 in COLUMNAS:
+            k += 1
+            img = ampliar(borrar_etiqueta(collage.crop((x0, y0, x1, y1))), sr)
+            realzar(a_16_9(img)).save(salida / f"t{k:02d}.png")
+            print(f"imagen {k} lista", flush=True)
+
+
+if __name__ == "__main__":
+    main()
