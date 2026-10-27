@@ -1,9 +1,10 @@
 """Paso 1: recorta las 16 imágenes del collage, borra la marca de tiempo de la esquina,
-las amplía con superresolución (EDSR x4) y les da más contraste, color y nitidez.
+las amplía con superresolución (Real-ESRGAN x4, o EDSR x4 de respaldo) y les da más contraste, color y nitidez.
 
 Uso: python3 recortar.py <collage> <carpeta_salida> [carpeta_modelos]
 Crea <salida>/imagenes/t01.png … t16.png a 2400 px de ancho (16:9).
-Si no encuentra <modelos>/EDSR_x4.pb (o no está instalado opencv-contrib) amplía sin IA.
+Busca <modelos>/RealESRGAN_x4plus.pth (torch + spandrel) o <modelos>/EDSR_x4.pb (opencv-contrib);
+si no hay ninguno, amplía sin IA.
 """
 import sys
 from pathlib import Path
@@ -45,13 +46,29 @@ def borrar_etiqueta(img):
 
 
 def superresolucion(modelos):
+    """Real-ESRGAN x4 (reconstruye texturas y bordes); si no está, EDSR x4 de OpenCV."""
+    try:
+        import torch
+        from spandrel import ModelLoader
+        modelo = ModelLoader().load_from_file(str(modelos / "RealESRGAN_x4plus.pth")).model.eval()
+
+        def realesrgan(rgb):
+            x = torch.from_numpy(rgb.copy()).permute(2, 0, 1)[None].float() / 255
+            with torch.no_grad():
+                y = modelo(x)[0].clamp(0, 1).permute(1, 2, 0).numpy()
+            return (y * 255).round().astype(np.uint8)
+        print("Superresolución: Real-ESRGAN x4", flush=True)
+        return realesrgan
+    except Exception as e:
+        print("Real-ESRGAN no disponible:", e, flush=True)
     try:
         import cv2
         sr = cv2.dnn_superres.DnnSuperResImpl_create()
         sr.readModel(str(modelos / "EDSR_x4.pb"))
         sr.setModel("edsr", 4)
-        return sr
-    except Exception as e:  # sin el modelo se usa la ampliación normal
+        print("Superresolución: EDSR x4", flush=True)
+        return lambda rgb: sr.upsample(rgb[:, :, ::-1].copy())[:, :, ::-1]
+    except Exception as e:  # sin modelos se usa la ampliación normal
         print("Sin superresolución:", e, flush=True)
         return None
 
@@ -59,8 +76,7 @@ def superresolucion(modelos):
 def ampliar(img, sr):
     if sr is None:
         return img
-    rgb = np.asarray(img)
-    return Image.fromarray(sr.upsample(rgb[:, :, ::-1].copy())[:, :, ::-1])
+    return Image.fromarray(np.ascontiguousarray(sr(np.asarray(img))))
 
 
 def realzar(img):
@@ -70,10 +86,10 @@ def realzar(img):
     bajo, alto = np.percentile(lum, 0.5), np.percentile(lum, 99.6)
     a = np.clip((a - bajo) / max(1, alto - bajo) * 255, 0, 255)
     img = Image.fromarray(a.astype(np.uint8))
-    img = img.filter(ImageFilter.UnsharpMask(radius=40, percent=22, threshold=0))  # claridad
-    img = ImageEnhance.Contrast(img).enhance(1.08)
-    img = ImageEnhance.Color(img).enhance(1.22)
-    return img.filter(ImageFilter.UnsharpMask(radius=2, percent=70, threshold=2))
+    img = img.filter(ImageFilter.UnsharpMask(radius=40, percent=15, threshold=0))  # claridad
+    img = ImageEnhance.Contrast(img).enhance(1.04)
+    img = ImageEnhance.Color(img).enhance(1.15)
+    return img.filter(ImageFilter.UnsharpMask(radius=2, percent=35, threshold=2))
 
 
 def a_16_9(img):
