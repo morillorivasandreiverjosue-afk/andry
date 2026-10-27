@@ -12,7 +12,7 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter
 
 import sonido_medieval as SM
 from sonido import SR  # noqa: F401  (sonido_medieval ya añadió ../napoleon al path)
@@ -175,7 +175,7 @@ def ken_burns(img, u, semilla, accion=False, t_abs=0.0, golpe=0.0):
         x += a * (math.sin(t_abs * 47.1) + 0.6 * math.sin(t_abs * 83.3 + 1.3))
         y += a * (math.sin(t_abs * 53.7 + 2.1) + 0.6 * math.sin(t_abs * 91.9))
     x, y = min(max(x, 0), sw - w), min(max(y, 0), sh - h)
-    return img.transform((W, H), Image.EXTENT, (x, y, x + w, y + h), Image.BICUBIC)
+    return img.transform((W, H), Image.EXTENT, (x, y, x + w, y + h), Image.BILINEAR)
 
 
 # ------------------------------------------------- escena propia: línea de tiempo
@@ -425,29 +425,27 @@ def rotulo(i, titulo):
     return img
 
 
-_VIN = None
-_GRANO = None
+_FIJOS = {}
 
 
 def acabado(img, tono=None, oscuro=0.0, destello=0.0, k=0):
-    global _VIN, _GRANO
-    if _VIN is None:
+    """Viñeta suave, tono de la peste y fundidos; todo con operaciones nativas de PIL (rápidas)."""
+    if not _FIJOS:
         yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
         r = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)
-        _VIN = (1 - 0.25 * np.clip(r - 0.55, 0, 1) ** 1.5)[..., None].astype(np.float32)
-        rg = np.random.default_rng(5)
-        _GRANO = [rg.normal(0, 2.5, (H, W, 1)).astype(np.float32) for _ in range(6)]
+        v = (255 * (1 - 0.25 * np.clip(r - 0.55, 0, 1) ** 1.5)).astype(np.uint8)
+        _FIJOS["vineta"] = Image.merge("RGB", [Image.fromarray(v)] * 3)
+        _FIJOS["peste"] = Image.new("RGB", (W, H), (211, 223, 240))
+        _FIJOS["blanco"] = Image.new("RGB", (W, H), (255, 240, 215))
+        _FIJOS["negro"] = Image.new("RGB", (W, H), (0, 0, 0))
     if tono == "peste":
-        img = ImageEnhance.Color(img).enhance(0.45)
-    a = np.asarray(img).astype(np.float32)
-    if tono == "peste":
-        a = a * np.array([0.92, 0.97, 1.04], np.float32) * 0.9
-    a = a * _VIN + _GRANO[k % 6]
+        img = ImageChops.multiply(ImageEnhance.Color(img).enhance(0.45), _FIJOS["peste"])
+    img = ImageChops.multiply(img, _FIJOS["vineta"])
     if destello > 0:
-        a = a * (1 - destello) + np.array([255, 240, 215], np.float32) * destello
+        img = Image.blend(img, _FIJOS["blanco"], min(1, destello))
     if oscuro > 0:
-        a *= (1 - oscuro)
-    return np.clip(a, 0, 255).astype(np.uint8)
+        img = Image.blend(img, _FIJOS["negro"], min(1, oscuro))
+    return img
 
 
 def fotograma(i, t, plan, extras):
@@ -485,7 +483,6 @@ def fotograma(i, t, plan, extras):
             img = Image.blend(dibujar(k - 1, t)[0], img, (t - t0) / 0.7)
     combate = nombre in ("combate", "duelo") or op.get("a")
     img = capas(img, t, brasas=1.0 if (op.get("fuego") or nombre in ("combate", "duelo")) else (0.5 if combate else 0),
-                polvo=0.6 if (not combate and nombre not in ("linea",) and PARTES[i].get("tono") != "peste") else 0,
                 humo=1.0 if op.get("fuego") or PARTES[i].get("tono") == "peste" else 0)
     img = P.pegar(img, extras["rotulo"], (110, H - 330), P.entrada_salida(t, p["inicio"] + 0.5, p["inicio"] + 5.0, 0.6))
     for frac, tarjeta in extras["datos"]:

@@ -10,7 +10,8 @@ tambores, ejército, flechas, asedio, mercado, herrería, campanas).
 ```bash
 python3 recortar.py                 # separa y amplía las imágenes (~40 min con Real-ESRGAN en CPU)
 # narración: salida/voz/cap0.mp3 … cap11.mp3 (identificadores de ElevenLabs en voz_elevenlabs.txt)
-python3 montaje.py --procesos 4     # video + audio + subtítulos (~45 min)
+python3 montaje.py --procesos 4     # video + audio (~45 min)
+python3 alinear.py                  # subtítulos sincronizados con la voz real
 python3 partir.py                   # subtítulos grabados y clips de ~1 minuto
 # revisar una sola parte:  python3 montaje.py --prueba 4
 ```
@@ -24,4 +25,5 @@ python3 partir.py                   # subtítulos grabados y clips de ~1 minuto
 | `recortar.py` | Separa cada collage en imágenes y las amplía con superresolución |
 | `montaje.py` | Orden de las escenas, efectos, escenas propias, mezcla y subtítulos |
 | `sonido_medieval.py` | Efectos de sonido medievales sintetizados |
+| `alinear.py` | Sincroniza cada subtítulo con la voz real (DTW contra una lectura de referencia con Kokoro) |
 | `partir.py` | Graba los subtítulos y parte el video en clips de ~1 minuto |

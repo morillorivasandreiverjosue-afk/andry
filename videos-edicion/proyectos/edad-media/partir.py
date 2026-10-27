@@ -1,7 +1,7 @@
 """Paso 3: graba los subtítulos en el video y lo parte en clips de alrededor de un minuto.
 
 Uso: python3 partir.py [--solo-partes]
-Lee salida/EdadMedia_documental.mp4 y salida/edad_media.srt (los deja montaje.py).
+Lee salida/EdadMedia_documental.mp4 (montaje.py) y salida/edad_media_sincronizado.srt (alinear.py).
 Crea salida/EdadMedia_subtitulado.mp4 y salida/por_minuto/Parte_01.mp4, Parte_02.mp4…
 Cada corte cae en la pausa entre dos subtítulos más cercana al minuto, para no partir ninguna frase.
 """
@@ -44,7 +44,11 @@ def main():
     salida = M.SALIDA
     plan, total = M.linea_de_tiempo()
     completo = salida / "EdadMedia_subtitulado.mp4"
-    srt = str(salida / "edad_media.srt").replace(":", r"\:").replace("'", r"\'")
+    # los subtítulos sincronizados con la voz (alinear.py) si existen; si no, los aproximados de montaje.py
+    archivo_srt = salida / "edad_media_sincronizado.srt"
+    if not archivo_srt.exists():
+        archivo_srt = salida / "edad_media.srt"
+    srt = str(archivo_srt).replace(":", r"\:").replace("'", r"\'")
     if "--solo-partes" not in sys.argv:
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(salida / "EdadMedia_documental.mp4"),
                         "-vf", f"subtitles='{srt}':force_style='{ESTILO}'",
@@ -54,7 +58,7 @@ def main():
         print("Video completo con subtítulos:", completo, flush=True)
     carpeta = salida / "por_minuto"
     carpeta.mkdir(exist_ok=True)
-    limites = [0.0] + puntos_de_corte(pausas_subtitulos(salida / "edad_media.srt"), total) + [total]
+    limites = [0.0] + puntos_de_corte(pausas_subtitulos(archivo_srt), total) + [total]
 
     def cortar(i):
         destino = carpeta / f"Parte_{i + 1:02d}.mp4"
