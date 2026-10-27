@@ -24,6 +24,7 @@ SALIDA = AQUI / "salida"
 _spec = importlib.util.spec_from_file_location("pompeya_montaje", AQUI.parent / "pompeya" / "montaje.py")
 P = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(P)
+P.ROMANOS = "I II III IV V VI VII VIII IX X".split()  # aquí hay diez capítulos
 
 W, H, FPS = 1920, 1080, 30
 VELOCIDAD_VOZ = 1.1   # algo más de ritmo que la locución original
