@@ -546,6 +546,66 @@ def mezclar(plan, total):
 
 
 # ------------------------------------------------------------- subtítulos
+MAX_SUB = 84  # caracteres por subtítulo (dos líneas de ~42)
+
+
+def trocear(frase):
+    """Parte una frase larga en trozos de hasta MAX_SUB caracteres, preferiblemente en comas."""
+    if len(frase) <= MAX_SUB + 12:
+        return [frase]
+    piezas = []
+    for pedazo in re.split(r"(?<=[,;])\s+", frase):
+        if len(pedazo) <= MAX_SUB + 12:
+            piezas.append(pedazo)
+            continue
+        palabras = pedazo.split()  # pedazo muy largo: se reparte en partes iguales por palabras
+        n = math.ceil(len(pedazo) / MAX_SUB)
+        objetivo, actual = len(pedazo) / n, ""
+        for w in palabras:
+            if len(actual) >= objetivo and len(piezas) < 1000:
+                piezas.append(actual)
+                actual = w
+            else:
+                actual = (actual + " " + w).strip()
+        piezas.append(actual)
+    trozos = []
+    for pz in piezas:
+        if trozos and len(trozos[-1]) + 1 + len(pz) <= MAX_SUB:
+            trozos[-1] += " " + pz
+        else:
+            trozos.append(pz)
+    # un final muy corto se une al anterior
+    if len(trozos) > 1 and len(trozos[-1]) < 25 and len(trozos[-2]) + len(trozos[-1]) <= MAX_SUB + 16:
+        trozos[-2] += " " + trozos.pop()
+    return trozos
+
+
+def dos_lineas(texto):
+    if len(texto) <= 44:
+        return texto
+    palabras = texto.split()
+    mejor = min(range(1, len(palabras)),
+                key=lambda j: abs(len(" ".join(palabras[:j])) - len(" ".join(palabras[j:]))))
+    return " ".join(palabras[:mejor]) + "\n" + " ".join(palabras[mejor:])
+
+
+def pausas_voz(ruta):
+    """Centros (en segundos) de los silencios de la narración, donde suelen acabar las frases."""
+    a = np.abs(cargar_wav(ruta)[:, 0])
+    paso = S.seg(0.01)
+    rms = np.sqrt(np.convolve(a[: len(a) // paso * paso].reshape(-1, paso).mean(1) ** 2, np.ones(3) / 3, "same"))
+    silencio = rms < np.percentile(rms, 90) * 0.08
+    pausas, inicio = [], None
+    for j, s in enumerate(np.append(silencio, False)):
+        if s and inicio is None:
+            inicio = j
+        elif not s and inicio is not None:
+            if j - inicio >= 15:
+                pausas.append((inicio + j) / 2 * 0.01)
+            inicio = None
+    return np.array(pausas)
+
+
 def srt(plan, caps):
     def ts(s):
         h, s = divmod(s, 3600)
@@ -554,13 +614,24 @@ def srt(plan, caps):
 
     lineas, k = [], 1
     for i, c in enumerate(caps):
-        frases = [f for f in re.split(r"(?<=[.?!:…])\s+", c["texto"]) if f]
-        pesos = np.array([len(f) + 12 for f in frases], float)
-        t = plan[i]["voz"]
-        for f, pz in zip(frases, pesos):
-            d = plan[i]["dur_voz"] * pz / pesos.sum()
-            lineas += [str(k), f"{ts(t)} --> {ts(t + d - 0.05)}", f, ""]
-            t += d
+        trozos = []  # (texto, peso, termina_frase)
+        for f in (f for f in re.split(r"(?<=[.?!:…])\s+", c["texto"]) if f):
+            partes = trocear(f)
+            trozos += [(p, len(p) + 4, j == len(partes) - 1) for j, p in enumerate(partes)]
+        pesos = np.array([p for _, p, _ in trozos], float)
+        dur = plan[i]["dur_voz"]
+        bordes = np.concatenate([[0], np.cumsum(pesos) / pesos.sum() * dur])
+        pausas = pausas_voz(SALIDA / "voz" / f"cap{i + 1}.wav")
+        # cada corte se lleva a la pausa real de la voz más cercana
+        for j in range(1, len(bordes) - 1):
+            margen = 1.5 if trozos[j - 1][2] else 0.8
+            cerca = pausas[np.abs(pausas - bordes[j]) < margen] if len(pausas) else pausas
+            if len(cerca):
+                bordes[j] = cerca[np.argmin(np.abs(cerca - bordes[j]))]
+            bordes[j] = max(bordes[j], bordes[j - 1] + 0.6)
+        for (texto, _, _), a, b in zip(trozos, bordes[:-1], bordes[1:]):
+            t0, t1 = plan[i]["voz"] + a, plan[i]["voz"] + b
+            lineas += [str(k), f"{ts(t0)} --> {ts(t1 - 0.05)}", dos_lineas(texto), ""]
             k += 1
     (SALIDA / "pompeya.srt").write_text("\n".join(lineas), encoding="utf-8")
     cap = ["00:00 Introducción"] + [f"{int(p['inicio'] // 60):02d}:{int(p['inicio'] % 60):02d} {c['titulo']}"
