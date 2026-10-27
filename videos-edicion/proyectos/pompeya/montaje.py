@@ -112,9 +112,9 @@ def ken_burns(img, u, semilla, accion, t_abs, golpe):
     """Encuadre con zoom y paneo. Nunca muestra la franja superior (donde estaba la marca de tiempo)."""
     sw, sh = img.size
     r = np.random.default_rng(semilla)
-    z0, z1 = (1.22, 1.42) if r.random() < .5 else (1.42, 1.22)
+    z0, z1 = (1.2, 1.32) if r.random() < .5 else (1.32, 1.2)
     if accion:
-        z0, z1 = 1.25, 1.5
+        z0, z1 = 1.22, 1.4
     z = z0 + (z1 - z0) * suave(u) + 0.10 * golpe
     w, h = sw / z, sh / z
     ymin = sh * 0.16
@@ -128,7 +128,7 @@ def ken_burns(img, u, semilla, accion, t_abs, golpe):
         y += a * (math.sin(t_abs * 53.7 + 2.1) + 0.6 * math.sin(t_abs * 91.9))
     x = min(max(x, 0), sw - w)
     y = min(max(y, ymin), sh - h)
-    return img.transform((W, H), Image.EXTENT, (x, y, x + w, y + h), Image.BILINEAR)
+    return img.transform((W, H), Image.EXTENT, (x, y, x + w, y + h), Image.BICUBIC)
 
 
 # --------------------------------------------------- mapa (escena propia)
@@ -338,9 +338,9 @@ def acabado(img, oscuro=0.0, destello=0.0):
     if _VIN is None:
         yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
         r = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)
-        _VIN = (1 - 0.42 * np.clip(r - 0.45, 0, 1) ** 1.6)[..., None].astype(np.float32)
+        _VIN = (1 - 0.22 * np.clip(r - 0.55, 0, 1) ** 1.6)[..., None].astype(np.float32)
         rg = np.random.default_rng(5)
-        _GRANO = [rg.normal(0, 6, (H, W, 1)).astype(np.float32) for _ in range(6)]
+        _GRANO = [rg.normal(0, 2.5, (H, W, 1)).astype(np.float32) for _ in range(6)]
         acabado.k = 0
     a = np.asarray(img).astype(np.float32) * _VIN
     acabado.k = (acabado.k + 1) % 6

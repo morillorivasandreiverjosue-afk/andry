@@ -1,7 +1,7 @@
 """Paso 3: graba los subtítulos en el video y lo parte en un video por capítulo.
 
 Uso: python3 partir.py <carpeta_salida> [video]
-El video de entrada por defecto es <salida>/Pompeya_final.mp4 (el que deja montaje.py).
+El video de entrada por defecto es <salida>/Pompeya_documental.mp4 (el que deja montaje.py).
 Crea <salida>/Pompeya_subtitulado.mp4 y <salida>/por_capitulos/Parte_01_….mp4 … Parte_09_….mp4
 """
 import re
@@ -23,7 +23,7 @@ def nombre_archivo(texto):
 
 def main():
     salida = Path(sys.argv[1]).resolve()
-    entrada = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else salida / "Pompeya_final.mp4"
+    entrada = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else salida / "Pompeya_documental.mp4"
     M.SALIDA = salida
     plan, total = M.linea_de_tiempo(salida)
     _, caps = M.leer_guion()

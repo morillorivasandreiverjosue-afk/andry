@@ -7,8 +7,13 @@ efectos sintetizados (se reutiliza `../napoleon/sonido.py`).
 
 ## Cómo generarlo
 
+Las imágenes del collage son pequeñas (~400 px), así que `recortar.py` las amplía con
+superresolución por IA (modelo EDSR x4 de OpenCV) y les sube el contraste y el color:
+
 ```bash
-python3 recortar.py collage.webp salida        # recorta las 16 imágenes y borra las marcas de tiempo
+pip install opencv-contrib-python-headless
+curl -L -o ../../modelos/EDSR_x4.pb https://raw.githubusercontent.com/Saafke/EDSR_Tensorflow/master/models/EDSR_x4.pb
+python3 recortar.py collage.webp salida        # recorta, borra las marcas de tiempo y amplía a HD (~5 min)
 # copia la narración de ElevenLabs como salida/voz/cap1.mp3 … cap9.mp3 (un archivo por capítulo)
 python3 montaje.py salida --procesos 4          # video + audio (~15 min de CPU)
 # revisar un solo capítulo:  python3 montaje.py salida --prueba 2
