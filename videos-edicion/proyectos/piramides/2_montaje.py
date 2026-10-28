@@ -1,7 +1,7 @@
 """Paso 2: monta el video vertical para TikTok (1080x1920) con imágenes, voz, música y subtítulos.
 
 Uso: python3 2_montaje.py <carpeta_salida>
-Necesita <salida>/imagenes/ (0_imagenes.py) y <salida>/voz.json (1_voz.py).
+Necesita <salida>/imagenes/ (0_imagenes.py) y <salida>/voz.json (1_voz.py, voz de ElevenLabs).
 Crea <salida>/Piramides_de_Egipto_TikTok.mp4 y <salida>/piramides.srt
 """
 import json
@@ -20,8 +20,6 @@ import sonido as SN  # noqa: E402  (música y efectos sintetizados del documenta
 
 W, H, FPS = 1080, 1920, 30
 XF = 0.35          # fundido entre imágenes
-GAP = 0.25         # silencio entre frases
-COLA = 0.45        # silencio al final de cada párrafo
 INICIO = 0.4       # silencio antes de la primera palabra
 FINAL = 2.5        # imagen final tras la última frase
 FUENTE = AQUI.parent / "napoleon" / "fuentes" / "cinzel-latin-700-normal.woff"
@@ -45,23 +43,20 @@ PLAN = [
 
 # =================================================================== línea de tiempo
 def construir(voz):
-    clips, voces, subs = [], [], []
-    t = INICIO
-    for p, frases in enumerate(voz):
-        ini = t
-        for f in frases:
-            voces.append((t, f["wav"]))
-            subs.append((t, t + f["dur"], f["texto"], p == 0))
-            t += f["dur"] + GAP
-        t += COLA - GAP
-        fin = t if p < len(voz) - 1 else t + FINAL
-        if p == 0:
-            ini = 0.0
+    """La narración va entera desde INICIO; cada párrafo ocupa su tramo de voz con sus imágenes."""
+    parrafos = voz["parrafos"]
+    subs = [(INICIO + f["ini"], INICIO + f["fin"], f["texto"], p == 0,
+             [(INICIO + w["ini"], INICIO + w["fin"], w["t"]) for w in f["palabras"]])
+            for p, frases in enumerate(parrafos) for f in frases]
+    total = INICIO + voz["dur"] + FINAL
+    inicios = [0.0] + [INICIO + fr[0]["ini"] - 0.15 for fr in parrafos[1:]] + [total]
+    clips = []
+    for p in range(len(parrafos)):
+        ini, fin = inicios[p], inicios[p + 1]
         tramo = (fin - ini) / len(PLAN[p])
         for k, (nombre, *mov) in enumerate(PLAN[p]):
             clips.append({"img": nombre, "mov": mov, "ini": ini + k * tramo, "dur": tramo, "parrafo": p})
-        t = fin
-    return clips, voces, subs, t
+    return clips, [(INICIO, voz["wav"])], subs, total
 
 
 # =================================================================== imagen
@@ -127,17 +122,19 @@ def partir(texto, max_palabras=4):
 
 
 def bloques_subtitulos(subs):
-    """Reparte el tiempo de cada frase entre sus grupos de palabras según su longitud."""
+    """Grupos de pocas palabras que aparecen justo cuando la voz los dice."""
     out = []
-    for ini, fin, texto, es_titulo in subs:
+    for _, _, _, es_titulo, palabras in subs:
         if es_titulo:
             continue
-        grupos = partir(texto)
-        pesos = np.array([len(g) + 4 for g in grupos], float)
-        cortes = ini + np.concatenate([[0], np.cumsum(pesos)]) / pesos.sum() * (fin - ini)
-        for g, a, b in zip(grupos, cortes[:-1], cortes[1:]):
-            out.append((a, b, g))
-    return out
+        i = 0
+        for g in partir(" ".join(w[2] for w in palabras)):
+            n = len(g.split())
+            out.append((palabras[i][0], palabras[i + n - 1][1], g))
+            i += n
+    # cada grupo se queda en pantalla hasta que empieza el siguiente (si la pausa es corta)
+    return [(a, min(b + 0.6, out[k + 1][0]) if k + 1 < len(out) else b + 0.6, g)
+            for k, (a, b, g) in enumerate(out)]
 
 
 def texto_centrado(draw, y, lineas, tam, color, borde=8):
@@ -195,6 +192,8 @@ def capa_pregunta(u):
 # =================================================================== audio
 def leer_voz(ruta):
     a, sr = sf.read(ruta, dtype="float32")
+    if a.ndim > 1:
+        a = a.mean(1)
     if sr != SN.SR:
         a = resample_poly(a, SN.SR, sr).astype(np.float32)
     return a
@@ -248,7 +247,7 @@ def main():
 
     with open(salida / "piramides.srt", "w", encoding="utf-8") as f:
         hms = lambda s: f"{int(s // 3600):02d}:{int(s % 3600 // 60):02d}:{int(s % 60):02d},{int(s % 1 * 1000):03d}"
-        for i, (a, b, texto, _) in enumerate(subs, 1):
+        for i, (a, b, texto, _, _) in enumerate(subs, 1):
             f.write(f"{i}\n{hms(a)} --> {hms(b)}\n{texto}\n\n")
 
     wav = salida / "audio.wav"
@@ -257,7 +256,8 @@ def main():
     mp4 = salida / "Piramides_de_Egipto_TikTok.mp4"
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
            "-r", str(FPS), "-i", "-", "-i", str(wav), "-c:v", "libx264", "-preset", "medium", "-crf", "18",
-           "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(mp4)]
+           "-pix_fmt", "yuv420p", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "44100",
+           "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(mp4)]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     n_cuadros = int(total * FPS)
     for k in range(n_cuadros):
