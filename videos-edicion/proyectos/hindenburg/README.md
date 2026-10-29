@@ -1,13 +1,22 @@
-# El desastre del Hindenburg: video para TikTok (en preparación)
+# El desastre del Hindenburg: video para TikTok
 
-Mismo montaje que `../piramides` (vertical 1080×1920, voz de ElevenLabs «Daniel - TI - Professional», ver `CLAUDE.md`).
+Video vertical (1080×1920) de unos 92 segundos con las fotos de `imagenes/`, voz en off de ElevenLabs
+(voz de Daniel, ver `CLAUDE.md`), música y efectos del documental de Napoleón (fuego, golpes, latido),
+textos clave arriba y subtítulos grandes al estilo TikTok sincronizados con la voz.
 
-Estado: falta la narración (unos 1.800 créditos de ElevenLabs para `voz_elevenlabs.txt`).
-`montaje.py` hace ya el video sin voz, con cada párrafo medido al ritmo de Daniel (≈2,6 palabras/s):
+## Cómo generarlo
 
 ```bash
-python3 montaje.py salida   # salida/Hindenburg_TikTok_sin_voz.mp4 y salida/tiempos.txt
+# 1. narración: genera voz_elevenlabs.txt en ElevenLabs y guárdala como salida/voz.mp3
+python3 alinear.py salida    # tiempos por palabra a partir de las pausas de la voz
+python3 montaje.py salida    # salida/Hindenburg_TikTok.mp4 y salida/hindenburg.srt
 ```
 
-- `imagenes/1.jpg` comedor de pasajeros · `2.jpg` el dirigible en tierra · `3.jpg` restos humeantes
-- `4.jpg` el incendio en Lakehurst · `5.jpg` el dirigible sobre el público
+## Archivos
+
+| Archivo | Qué hace |
+|---|---|
+| `voz_elevenlabs.txt` | Texto de la narración, con las etiquetas de tono |
+| `imagenes/` | `1.jpg` comedor · `2.jpg` en tierra · `3.jpg` restos · `4.jpg` incendio · `5.jpg` sobre el público |
+| `alinear.py` | Alinea el texto con las pausas del audio (sin transcribir) y reparte las palabras por sílabas |
+| `montaje.py` | Imágenes de cada párrafo, carteles, música, subtítulos y render del video |
