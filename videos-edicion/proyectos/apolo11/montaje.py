@@ -67,14 +67,28 @@ def construir(salida):
         por_tema.setdefault(re.sub(r"_\d+$", "", p.stem), []).append(p.name)
     cursor = {}
 
+    ultima = []
+
     def foto(tema, cap):
-        opciones = [tema] + plan.POR_CAPITULO.get(cap, []) + plan.POR_CAPITULO[0]
-        for t in opciones:
-            if por_tema.get(t):
-                k = cursor.get(t, 0)
-                cursor[t] = k + 1
-                return por_tema[t][k % len(por_tema[t])]
-        return imgs[0].name
+        """Elige foto del tema (y temas parecidos), turnándolas y sin repetir la anterior."""
+        grupo = []
+        for t in [tema] + plan.ALIAS.get(tema, []):
+            grupo += por_tema.get(t, [])
+        if len(grupo) < 3:
+            for t in plan.POR_CAPITULO.get(cap, []):
+                grupo += [x for x in por_tema.get(t, []) if x not in grupo]
+        if not grupo:
+            for t in plan.POR_CAPITULO[0]:
+                grupo += por_tema.get(t, [])
+        grupo = grupo or [imgs[0].name]
+        k = cursor.get(tema, 0)
+        elegido = grupo[k % len(grupo)]
+        if ultima and elegido == ultima[-1] and len(grupo) > 1:
+            k += 1
+            elegido = grupo[k % len(grupo)]
+        cursor[tema] = k + 1
+        ultima.append(elegido)
+        return elegido
 
     tomas = []
 

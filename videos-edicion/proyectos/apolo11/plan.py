@@ -93,3 +93,14 @@ EFECTOS = [
     ("atravesó la atmósfera", "rugido"),
     ("perdía temporalmente las comunicaciones", "estatica"),
 ]
+
+# si falta un tema, probar con estos antes que con los del capítulo
+ALIAS = {
+    "eagle": ["eagle_ascenso", "armstrong_eagle", "luna_superficie"],
+    "columbia": ["eagle_ascenso", "luna_orbita"],
+    "multitud": ["lanzamiento"],
+    "astronautas_nave": ["tripulacion"],
+    "reentrada": ["amerizaje"],
+    "hornet": ["amerizaje"],
+    "huella": ["luna_superficie"],
+}
