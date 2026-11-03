@@ -73,8 +73,7 @@ def cortar_en_silencio(t):
 
 def construir(salida):
     frases = json.loads((salida / "frases.json").read_text())
-    for it in frases:  # 0 = introducción, 1..12 = capítulos, 13 = conclusión
-        it["capitulo"] = max(0, it["capitulo"] - 1)
+    # capítulo 0 = introducción (sin título propio), 1..7 = secciones del guion
     cortes = [cortar_en_silencio(it["ini"]) for it in frases if it["tipo"] == "titulo"]
 
     def ot(t):

@@ -46,6 +46,14 @@ TEMAS = {
     "base_aerea": ("Naval Air Station Fort Lauderdale", 2),
 }
 
+# búsquedas de repuesto cuando la principal da pocas fotos útiles
+ALTERNATIVAS = {
+    "cyclops": ("USS Cyclops collier 1911 photograph NH", 2),
+    "avenger": ("Grumman TBM-3 Avenger flight", 5),
+    "radio": ("radio operator Navy 1944 photograph", 2),
+    "naufragio": ("shipwreck underwater NOAA diver", 3),
+}
+
 PD = ("public domain", "pd-", "cc0")
 WEB = "https://commons.wikimedia.org"
 
@@ -130,6 +138,9 @@ def main():
     cred_path = destino / ("creditos_inv.json" if inverso else "creditos.json")
     creditos = json.loads(cred_path.read_text()) if cred_path.exists() else {}
     temas = list(TEMAS.items())[::-1] if inverso else list(TEMAS.items())
+    solo = [a[5:].split(",") for a in sys.argv[2:] if a.startswith("solo=")]
+    if solo:  # solo=tema1,tema2 → buscar únicamente esos temas, con búsquedas alternativas
+        temas = [(t, ALTERNATIVAS.get(t, TEMAS.get(t))) for t in solo[0]]
     for tema, (q, cuantas) in temas:
         usados = set()
         for f in destino.glob("creditos*.json"):
