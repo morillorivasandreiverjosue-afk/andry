@@ -1,10 +1,11 @@
-"""Descarga fotos de dominio público (NASA y similares) desde Wikimedia Commons.
+"""Descarga fotos de dominio público (NASA y similares) desde Wikimedia Commons (páginas web públicas).
 
 Uso: python3 descargar_imagenes.py <carpeta_destino>
 Por cada tema busca archivos en Commons, se queda solo con los que tienen licencia de dominio público
 y descarga la versión de 1920 px. Guarda creditos.json con el autor y la licencia de cada foto.
 """
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -59,31 +60,47 @@ TEMAS = {
     "estrellas": ("Milky Way night sky", 2),
 }
 
-PD = ("public domain", "pd-", "pd ", "cc0", "pdm")
+PD = ("public domain", "pd-", "cc0")
+WEB = "https://commons.wikimedia.org"
 
 
-def get(params):
-    params = {**params, "format": "json", "formatversion": "2"}
-    req = urllib.request.Request(API + "?" + urllib.parse.urlencode(params), headers={"User-Agent": UA})
-    for intento in range(6):
-        try:
-            with urllib.request.urlopen(req, timeout=40) as r:
-                return json.load(r)
-        except Exception as e:  # 429 u otros: esperar y reintentar
-            time.sleep(5 * (intento + 1))
-    raise RuntimeError(f"no se pudo consultar {params}")
-
-
-def bajar(url, ruta):
+def leer(url):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     for intento in range(6):
         try:
-            with urllib.request.urlopen(req, timeout=120) as r:
-                ruta.write_bytes(r.read())
-            return True
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return r.read()
         except Exception:
-            time.sleep(5 * (intento + 1))
-    return False
+            time.sleep(6 * (intento + 1))
+    return None
+
+
+def buscar(q):
+    """Busca en Commons (página web de búsqueda) y devuelve nombres de archivo."""
+    url = WEB + "/w/index.php?" + urllib.parse.urlencode(
+        {"title": "Special:Search", "search": q, "ns6": "1", "fulltext": "1", "limit": "30"})
+    html = (leer(url) or b"").decode("utf-8", "ignore")
+    vistos = []
+    for f in re.findall(r'href="/wiki/(File:[^"#?]+)"', html):
+        if f not in vistos and re.search(r"\.(jpe?g|png|tiff?)$", f, re.I):
+            vistos.append(f)
+    return vistos
+
+
+def ficha(archivo):
+    """Lee la página del archivo: licencia, autor, ancho y URL original."""
+    html = (leer(WEB + "/wiki/" + archivo) or b"").decode("utf-8", "ignore")
+    html = html.replace("&#95;", "_")
+    lic = " ".join(sorted(set(re.findall(r'class="licensetpl_short"[^>]*>([^<]*)<', html)))).lower()
+    if re.search(r'class="licensetpl_attr_req"[^>]*>true<', html):
+        lic += " (atribución obligatoria)"
+    orig = re.search(r'(https://upload\.wikimedia\.org/wikipedia/commons/([0-9a-f])/([0-9a-f]{2})/([^"?]+))'
+                     r'\?[^"]*utm_content=original', html)
+    ancho = re.search(r'class="fileInfo">\(([\d,\.\s]+)\s*(?:×|&#215;|x)', html)
+    ancho = int(re.sub(r"\D", "", ancho.group(1))) if ancho else 0
+    autor = re.search(r'id="fileinfotpl_aut"[^>]*>.*?</td>\s*<td[^>]*>(.*?)</td>', html, re.S)
+    autor = re.sub(r"<[^>]+>", "", autor.group(1)).strip()[:200] if autor else ""
+    return lic, orig, ancho, autor
 
 
 def main():
@@ -93,37 +110,38 @@ def main():
     creditos = json.loads(cred_path.read_text()) if cred_path.exists() else {}
     usados = {c["titulo"] for c in creditos.values()}
     for tema, (q, cuantas) in TEMAS.items():
-        ya = [k for k in creditos if k.startswith(tema + "_")]
-        if len(ya) >= cuantas:
+        n = len([k for k in creditos if k.startswith(tema + "_")])
+        if n >= cuantas:
             continue
-        r = get({"action": "query", "generator": "search", "gsrsearch": f"{q} filetype:bitmap",
-                 "gsrnamespace": "6", "gsrlimit": "25", "prop": "imageinfo",
-                 "iiprop": "url|size|extmetadata|mime", "iiurlwidth": "1920"})
-        paginas = sorted(r.get("query", {}).get("pages", []), key=lambda p: p.get("index", 99))
-        n = len(ya)
-        for p in paginas:
+        for archivo in buscar(q):
             if n >= cuantas:
                 break
-            ii = (p.get("imageinfo") or [{}])[0]
-            meta = ii.get("extmetadata", {})
-            lic = (meta.get("LicenseShortName", {}).get("value", "") + " " +
-                   meta.get("License", {}).get("value", "")).lower()
-            if not any(k in lic for k in PD) or p["title"] in usados:
+            if archivo in usados:
                 continue
-            if ii.get("mime") not in ("image/jpeg", "image/png", "image/tiff") or ii.get("width", 0) < 1000:
+            lic, orig, ancho, autor = ficha(archivo)
+            time.sleep(0.7)
+            # solo dominio público y fotos grandes; nada con atribución obligatoria
+            if not orig or not any(k in lic for k in PD) or "atribución" in lic or "by" in lic.split() or (ancho and ancho < 1000):
                 continue
-            url = ii.get("thumburl") or ii.get("url")
-            nombre = f"{tema}_{n}.jpg"
-            if bajar(url, destino / nombre):
-                creditos[nombre] = {"titulo": p["title"], "licencia": lic.strip(),
-                                    "autor": meta.get("Artist", {}).get("value", ""),
-                                    "fuente": ii.get("descriptionurl", "")}
-                usados.add(p["title"])
-                n += 1
-                print(f"{nombre}  <- {p['title']}", flush=True)
-            time.sleep(1.0)
-        cred_path.write_text(json.dumps(creditos, ensure_ascii=False, indent=1))
-        time.sleep(1.5)
+            url, a, b, nom = orig.groups()
+            if ancho > 2400 or not ancho:
+                url = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{a}/{b}/{nom}/1920px-{nom}"
+                if nom.lower().endswith((".tif", ".tiff")):
+                    url += ".jpg"
+            elif nom.lower().endswith((".tif", ".tiff")):
+                url = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{a}/{b}/{nom}/{ancho}px-{nom}.jpg"
+            datos = leer(url)
+            if not datos or len(datos) < 30000:
+                continue
+            nombre = f"{tema}_{n}" + (".png" if nom.lower().endswith(".png") else ".jpg")
+            (destino / nombre).write_bytes(datos)
+            creditos[nombre] = {"titulo": archivo, "licencia": lic, "autor": autor,
+                                "fuente": WEB + "/wiki/" + archivo}
+            usados.add(archivo)
+            n += 1
+            print(f"{nombre}  <- {archivo}  [{lic}]", flush=True)
+            cred_path.write_text(json.dumps(creditos, ensure_ascii=False, indent=1))
+            time.sleep(0.7)
     print(f"Listo: {len(creditos)} fotos")
 
 
