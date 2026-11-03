@@ -88,10 +88,12 @@ def main():
                 f = (k - izq) / (der - izq)
                 t_ini[k] = t_fin[izq] + (t_ini[der] - t_fin[izq]) * f
                 t_fin[k] = t_ini[k]
+    encontrada = set(k for a, b, n in sm.get_matching_blocks() for k in range(a, a + n))
     for i, it in enumerate(items):
         ks = [k for k in range(len(gw)) if gi[k] == i]
         it["ini"] = round(t_ini[ks[0]], 3)
         it["fin"] = round(t_fin[ks[-1]], 3)
+        it["coincidencia"] = round(sum(k in encontrada for k in ks) / len(ks), 2)
     for a, b in zip(items, items[1:]):  # sin solapes
         if b["ini"] < a["fin"]:
             a["fin"] = b["ini"]

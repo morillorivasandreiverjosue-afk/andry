@@ -48,12 +48,30 @@ def suave(u):
 
 
 # ===================================================================== línea de tiempo
+_SIL = []
+
+
+def cortar_en_silencio(t):
+    """Punto de corte antes de un título de capítulo: el centro de la pausa real más larga justo antes de
+    `t`, para no partir ninguna palabra (la hora de `t` es aproximada)."""
+    if not _SIL:
+        out = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(AQUI / "narracion.wav"), "-af",
+                              "silencedetect=noise=-38dB:d=0.15", "-f", "null", "-"], capture_output=True,
+                             text=True).stderr
+        _SIL.extend(zip([float(x) for x in re.findall(r"silence_start: ([\d.]+)", out)],
+                        [float(x) for x in re.findall(r"silence_end: ([\d.]+)", out)]))
+    cand = [(a, b) for a, b in _SIL if t - 3.0 < (a + b) / 2 < t + 0.6]
+    if not cand:
+        return max(0.0, t - 0.3)
+    a, b = max(cand, key=lambda s: s[1] - s[0])
+    return (a + b) / 2
+
+
 def construir(salida):
     frases = json.loads((salida / "frases.json").read_text())
     for it in frases:  # 0 = introducción, 1..12 = capítulos, 13 = conclusión
         it["capitulo"] = max(0, it["capitulo"] - 1)
-    cortes = [max(it["ini"] - 0.3, frases[k - 1]["fin"] + 0.05 if k else 0)
-              for k, it in enumerate(frases) if it["tipo"] == "titulo"]
+    cortes = [cortar_en_silencio(it["ini"]) for it in frases if it["tipo"] == "titulo"]
 
     def ot(t):
         """tiempo de la narración -> tiempo del video"""
@@ -155,7 +173,11 @@ def construir(salida):
     for it in frases:
         if it["tipo"] != "texto":
             continue
-        a, b = ot(it["ini"]), ot(it["fin"])
+        fin = it["fin"]
+        for c in cortes:  # que ningún subtítulo se quede en pantalla durante la pausa del capítulo
+            if it["ini"] < c < fin:
+                fin = c - 0.05
+        a, b = ot(it["ini"]), ot(fin)
         trozos = trocear(it["texto"])
         pesos = np.cumsum([0] + [len(x) for x in trozos]) / sum(len(x) for x in trozos)
         for j, tr in enumerate(trozos):
