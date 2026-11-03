@@ -1,6 +1,7 @@
 """Descarga fotos de dominio público (NASA y similares) desde Wikimedia Commons (páginas web públicas).
 
-Uso: python3 descargar_imagenes.py <carpeta_destino>
+Uso: python3 descargar_imagenes.py <carpeta_destino> [inverso]
+(con «inverso» recorre los temas desde el final, para descargar con dos procesos a la vez)
 Por cada tema busca archivos en Commons, se queda solo con los que tienen licencia de dominio público
 y descarga la versión de 1920 px. Guarda creditos.json con el autor y la licencia de cada foto.
 """
@@ -9,6 +10,7 @@ import re
 import sys
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -24,14 +26,14 @@ TEMAS = {
     "earthrise": ("Earthrise Apollo 8", 2),
     "sputnik": ("Sputnik 1 replica", 2),
     "gagarin": ("Yuri Gagarin 1961", 2),
-    "kennedy": ("Kennedy speech Congress May 25 1961 moon", 3),
+    "kennedy": ("Kennedy speech Congress May 25 1961 moon", 2),
     "kennedy_rice": ("Kennedy Rice University speech 1962", 2),
     "apolo1": ("Apollo 1 crew Grissom White Chaffee", 2),
     "tripulacion": ("Apollo 11 crew portrait Armstrong Collins Aldrin", 3),
     "armstrong": ("Neil Armstrong portrait NASA 1969", 2),
-    "aldrin": ("Buzz Aldrin portrait NASA", 2),
-    "collins": ("Michael Collins astronaut portrait", 2),
-    "saturno_v": ("Apollo 11 Saturn V launch pad", 5),
+    "aldrin": ("Edwin Aldrin Apollo 11 portrait S69", 2),
+    "collins": ("Michael Collins Apollo 11 portrait S69", 2),
+    "saturno_v": ("Apollo 11 Saturn V launch pad 39A KSC", 5),
     "vab": ("Saturn V Vehicle Assembly Building rollout Apollo 11", 3),
     "lanzamiento": ("Apollo 11 launch liftoff July 16 1969", 6),
     "multitud": ("crowd watching Apollo 11 launch", 2),
@@ -40,7 +42,7 @@ TEMAS = {
     "eagle": ("Apollo 11 Lunar Module Eagle", 6),
     "astronautas_nave": ("Apollo 11 crew training", 3),
     "agc": ("Apollo Guidance Computer DSKY", 2),
-    "huella": ("Apollo 11 bootprint", 2),
+    "huella": ("Apollo 11 bootprint AS11-40", 2),
     "aldrin_superficie": ("Aldrin Apollo 11 lunar surface", 4),
     "bandera": ("Apollo 11 flag lunar surface", 2),
     "placa": ("Apollo 11 plaque", 2),
@@ -66,12 +68,29 @@ WEB = "https://commons.wikimedia.org"
 
 def leer(url):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    for intento in range(6):
+    for intento in range(3):
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read()
         except Exception:
-            time.sleep(6 * (intento + 1))
+            time.sleep(8 * (intento + 1))
+    return None
+
+
+def leer_rapido(url):
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    for intento in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=90) as r:
+                datos = r.read()
+            time.sleep(2.0)  # ritmo tranquilo para no saturar el servidor
+            return datos
+        except urllib.error.HTTPError as e:
+            if e.code in (400, 404, 500):
+                return None
+            time.sleep(15 * (intento + 1))  # 429: demasiadas peticiones, esperar
+        except Exception:
+            time.sleep(3 * (intento + 1))
     return None
 
 
@@ -85,6 +104,23 @@ def buscar(q):
         if f not in vistos and re.search(r"\.(jpe?g|png|tiff?)$", f, re.I):
             vistos.append(f)
     return vistos
+
+
+# Nombres de archivo con el código de catálogo de la NASA: obras del gobierno de EE. UU. (dominio público).
+NASA_ID = re.compile(r"(AS\d{1,2}-\d+-\d+|GPN-\d{4}-\d+|KSC-\d+|S\d{2}-\d+|\d{2}-H[CS]?-\d+|"
+                     r"jsc\d{4}e\d+|NASA|Apollo_?\d+_.*(Launch|crew|Splashdown|Mission_Control))", re.I)
+
+
+def directo(archivo):
+    """URL de la versión de 1920 px calculada a partir del nombre (sin abrir la página)."""
+    import hashlib
+    nom = urllib.parse.unquote(archivo[5:]).replace(" ", "_")
+    h = hashlib.md5(nom.encode()).hexdigest()
+    q = urllib.parse.quote(nom)
+    url = f"https://upload.wikimedia.org/wikipedia/commons/thumb/{h[0]}/{h[:2]}/{q}/1920px-{q}"
+    if nom.lower().endswith((".tif", ".tiff")):
+        url += ".jpg"
+    return url, f"https://upload.wikimedia.org/wikipedia/commons/{h[0]}/{h[:2]}/{q}"
 
 
 def ficha(archivo):
@@ -106,17 +142,45 @@ def ficha(archivo):
 def main():
     destino = Path(sys.argv[1])
     destino.mkdir(parents=True, exist_ok=True)
-    cred_path = destino / "creditos.json"
+    inverso = len(sys.argv) > 2 and sys.argv[2] == "inverso"
+    cred_path = destino / ("creditos_inv.json" if inverso else "creditos.json")
     creditos = json.loads(cred_path.read_text()) if cred_path.exists() else {}
-    usados = {c["titulo"] for c in creditos.values()}
-    for tema, (q, cuantas) in TEMAS.items():
-        n = len([k for k in creditos if k.startswith(tema + "_")])
+    temas = list(TEMAS.items())[::-1] if inverso else list(TEMAS.items())
+    for tema, (q, cuantas) in temas:
+        usados = set()
+        for f in destino.glob("creditos*.json"):
+            usados |= {c["titulo"] for c in json.loads(f.read_text()).values()}
+        n = len(list(destino.glob(f"{tema}_[0-9]*.*")))
         if n >= cuantas:
             continue
         for archivo in buscar(q):
             if n >= cuantas:
                 break
             if archivo in usados:
+                continue
+            if NASA_ID.search(archivo):  # foto oficial de la NASA: dominio público
+                url, original = directo(archivo)
+                datos = leer_rapido(url) or (None if archivo.lower().endswith((".tif", ".tiff"))
+                                             else leer_rapido(original))
+                if datos and len(datos) > 60000 and len(datos) < 40_000_000:
+                    try:
+                        from PIL import Image
+                        import io
+                        im = Image.open(io.BytesIO(datos))
+                        if im.width < 1000:
+                            continue
+                    except Exception:
+                        continue
+                    ext = ".png" if archivo.lower().endswith(".png") else ".jpg"
+                    while list(destino.glob(f"{tema}_{n}.*")):
+                        n += 1
+                    nombre = f"{tema}_{n}{ext}"
+                    (destino / nombre).write_bytes(datos)
+                    creditos[nombre] = {"titulo": archivo, "licencia": "public domain (NASA)", "autor": "NASA",
+                                        "fuente": WEB + "/wiki/" + archivo}
+                    n += 1
+                    print(f"{nombre}  <- {archivo}  [NASA, dominio público]", flush=True)
+                    cred_path.write_text(json.dumps(creditos, ensure_ascii=False, indent=1))
                 continue
             lic, orig, ancho, autor = ficha(archivo)
             time.sleep(0.7)
@@ -133,7 +197,10 @@ def main():
             datos = leer(url)
             if not datos or len(datos) < 30000:
                 continue
-            nombre = f"{tema}_{n}" + (".png" if nom.lower().endswith(".png") else ".jpg")
+            ext = ".png" if nom.lower().endswith(".png") else ".jpg"
+            while list(destino.glob(f"{tema}_{n}.*")):
+                n += 1
+            nombre = f"{tema}_{n}{ext}"
             (destino / nombre).write_bytes(datos)
             creditos[nombre] = {"titulo": archivo, "licencia": lic, "autor": autor,
                                 "fuente": WEB + "/wiki/" + archivo}

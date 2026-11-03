@@ -22,7 +22,7 @@ def normal(w):
 
 
 def frases(p):
-    partes = re.split(r'(?<=[.?!])\s+(?=[¿¡"A-ZÁÉÍÓÚÑ0-9])', p)
+    partes = re.split(r'(?<!\s[A-Z]\.)(?<=[.?!])\s+(?=[¿¡"A-ZÁÉÍÓÚÑ0-9])', p)
     return [x.strip() for x in partes if x.strip()]
 
 
