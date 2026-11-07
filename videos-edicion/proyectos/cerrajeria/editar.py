@@ -5,7 +5,7 @@
 3. Música propia generada con código (100 BPM) y efectos cuadrados con el beat:
    zoom en cada compás, sacudida y destello cuando se abre la puerta.
 
-Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow|nostalgico|selectivo|byn]
+Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow|nostalgico|selectivo|byn|pop] [título]
 """
 import subprocess
 import sys
@@ -33,12 +33,17 @@ TRAMOS = [
 DROP = 24.0              # momento (en el video final) en que se abre la puerta
 TOTAL = 28.8             # 12 compases
 ESTILO = sys.argv[3] if len(sys.argv) > 3 else "trap"
-SELECTIVO = ESTILO in ("selectivo", "byn")  # blanco y negro (selectivo: con rojo y azul), salida 4K
-NOSTALGICO = ESTILO in ("nostalgico", "selectivo", "byn")
+SELECTIVO = ESTILO in ("selectivo", "byn", "pop")  # blanco y negro (selectivo: con rojo y azul), salida 4K
+NOSTALGICO = ESTILO in ("nostalgico", "selectivo", "byn", "pop")  # pop: blanco y negro con colores fuertes
+TITULO = sys.argv[4] if len(sys.argv) > 4 else "APERTURA DE CARRO"
 if NOSTALGICO:   # video entero a velocidad normal, sin efectos, solo fundidos
-    TRAMOS = [(0.0, 42.4, 1.0)]
-    TOTAL = 45.0                 # el último cuadro (puerta abierta) se queda quieto mientras se apaga
+    _dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                                 sys.argv[1]], capture_output=True, text=True).stdout)
+    TRAMOS = [(0.0, _dur, 1.0)]
+    TOTAL = round(_dur + 2.6, 2)  # el último cuadro se queda quieto mientras se apaga
     ENTRADA, SALIDA = 3.0, 3.5   # segundos de fundido desde negro y hacia negro
+    if _dur > 90:                # videos largos: 30 cuadros por segundo para que no tarde tanto
+        FPS = 30
 
 
 # ---------------------------------------------------------------- imagen
@@ -49,7 +54,13 @@ def filtro_video():
              "eq=gamma=1.08:saturation=1.05:contrast=1.06,"
              "hqdn3d=2:2:4:4,"
              f"scale={W}:-2:flags=lanczos,crop={W}:{H},cas=0.5,fps={FPS}")
-    if SELECTIVO:    # contraste limpio, sin quemar los blancos
+    if ESTILO == "pop":          # otro video: quitar el tinte morado de la cámara
+        color = ("colorchannelmixer=rr=1.0:gg=1.06:bb=0.80,eq=saturation=1.15,hqdn3d=2:2:4:4,"
+                 f"scale={W}:-2:flags=lanczos,crop={W}:{H},cas=0.5,fps={FPS},"
+                 "curves=all='0/0.03 0.25/0.21 0.75/0.78 1/0.92'")
+    if ESTILO == "pop":
+        pass
+    elif SELECTIVO:    # contraste limpio, sin quemar los blancos
         color += ",curves=all='0/0.02 0.25/0.21 0.75/0.80 1/0.95'"
     elif NOSTALGICO:   # tono apagado: gris, negros lavados y un toque de azul
         color += (",eq=saturation=0.38:contrast=0.88:brightness=-0.02,"
@@ -64,16 +75,20 @@ def filtro_video():
     return ";".join(partes)
 
 
-TITULO = "APERTURA DE CARRO"
 TITULO_ENTRA, TITULO_SALE = (1.2, 2.4), (5.0, 6.4)    # aparece poco a poco y luego se va
 
 
 def capa_titulo():
     from PIL import ImageDraw, ImageFilter, ImageFont
-    fuente = ImageFont.truetype("/usr/share/fonts/opentype/inter/Inter-Light.otf", 76)
-    espacio = 14                                              # letras separadas, estilo elegante
-    anchos = [fuente.getlength(ch) for ch in TITULO]
-    total = sum(anchos) + espacio * (len(TITULO) - 1)
+    tam = 76
+    while True:                                               # que el título quepa con margen a los lados
+        fuente = ImageFont.truetype("/usr/share/fonts/opentype/inter/Inter-Light.otf", tam)
+        espacio = round(tam * 0.18)                           # letras separadas, estilo elegante
+        anchos = [fuente.getlength(ch) for ch in TITULO]
+        total = sum(anchos) + espacio * (len(TITULO) - 1)
+        if total <= W * 0.86 or tam <= 30:
+            break
+        tam -= 2
     capa = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(capa)
     x, y = (W - total) / 2, H * 0.44
@@ -93,8 +108,21 @@ def capa_titulo():
 _TITULO = None
 
 
+def color_pop(arr):
+    """Blanco y negro, pero los colores fuertes (amarillo, naranja, rojo) se quedan."""
+    h, s, v = [np.asarray(c).astype(np.float32) for c in Image.fromarray(arr.astype(np.uint8)).convert("HSV").split()]
+    h = h * 360 / 255
+    tinte = np.clip(1 - (np.abs((h - 255 + 180) % 360 - 180) - 35) / 20, 0, 1)   # morados del tinte: fuera
+    piel = np.clip(1 - (np.abs(h - 22) - 14) / 8, 0, 1) * np.clip((215 - s) / 30, 0, 1)
+    w = np.clip((s - 120) / 50, 0, 1) * (1 - tinte) * np.clip((v - 40) / 40, 0, 1) * (1 - piel)
+    gris = (arr @ np.array([0.299, 0.587, 0.114], np.float32))[..., None]
+    return np.clip(gris + (arr - gris) * (w[..., None] * 1.4), 0, 255)
+
+
 def color_selectivo(arr):
     """Todo en gris menos el rojo del carro y los azules fuertes (en 'byn', todo en gris)."""
+    if ESTILO == "pop":
+        return color_pop(arr)
     if ESTILO == "byn":
         return np.repeat(arr @ np.array([0.299, 0.587, 0.114], np.float32), 3).reshape(arr.shape)
     h, s, _ = [np.asarray(c).astype(np.float32) for c in Image.fromarray(arr.astype(np.uint8)).convert("HSV").split()]
@@ -222,6 +250,8 @@ def hz(midi):
 
 
 def musica():
+    if ESTILO == "pop":
+        return musica_boombap()
     if NOSTALGICO:
         return musica_nostalgica()
     return musica_dembow() if ESTILO == "dembow" else musica_trap()
@@ -264,11 +294,13 @@ def musica_nostalgica():
             m = notas[[0, 1, 2, 3, 2, 1, 2, 3][k]]
             poner(piano_suave(hz(m), 2.0, 0.55 + 0.1 * rng.random()), t0 + k * negra / 2 + rng.normal(0, 0.008),
                   0.16, pan=-0.25 + 0.5 * (k % 2))
-        if c >= 4:                                           # entra la melodía
+        ultimos = TOTAL / compas - c < 3                     # los últimos compases quedan suaves
+        if c >= 4 and (c // 8) % 3 != 2 and not ultimos:     # entra la melodía (con descansos)
+            sube = 12 if (c // 8) % 3 == 1 else 0            # a veces una octava más arriba
             for b, m in melodia[c % 4]:
-                poner(piano_suave(hz(m), 3.0, 0.9), t0 + b * negra, 0.24, pan=0.1)
+                poner(piano_suave(hz(m + sube), 3.0, 0.9), t0 + b * negra, 0.22 if sube else 0.24, pan=0.1)
         poner(pad([hz(m - 12) for m in notas[:3]], compas + 0.6), t0, 0.35 if c >= 2 else 0.18)
-        if 4 <= c < 11:                                      # batería lo-fi muy suave
+        if c >= 4 and c % 16 not in (14, 15) and not ultimos:  # batería lo-fi muy suave
             for b in range(4):
                 if b in (0, 2):
                     poner(lp(kick(), 900), t0 + b * negra + (0.5 * negra if b == 2 else 0), 0.35)
@@ -298,6 +330,90 @@ def musica_nostalgica():
     mezcla /= np.abs(mezcla).max()
     mezcla = np.tanh(mezcla * 1.2)
     tt = np.arange(len(mezcla)) / SR                          # fundidos iguales al video
+    vol = np.clip(np.minimum(tt / ENTRADA, (TOTAL - tt) / SALIDA), 0, 1) ** 1.2
+    mezcla *= vol[:, None]
+    return (mezcla / np.abs(mezcla).max() * 0.9).astype(np.float32)
+
+
+def rhodes(f, largo, fuerza=1.0):
+    t = np.arange(n(largo)) / SR
+    x = np.sin(2 * np.pi * f * t + 1.2 * fuerza * np.exp(-t / 0.3) * np.sin(2 * np.pi * f * t))
+    x += 0.25 * np.sin(2 * np.pi * f * 7.02 * t) * np.exp(-t / 0.08)        # campanita del ataque
+    x *= np.minimum(1, t / 0.004) * np.exp(-t / 1.6) * (1 + 0.18 * np.sin(2 * np.pi * 4.5 * t))
+    return x * fuerza
+
+
+def flauta(f, largo):
+    t = np.arange(n(largo)) / SR
+    vib = 1 + 0.006 * np.sin(2 * np.pi * 5.2 * t) * np.minimum(1, t / 0.4)
+    fase = 2 * np.pi * np.cumsum(f * vib) / SR
+    x = np.sin(fase) + 0.2 * np.sin(2 * fase) + 0.05 * np.random.default_rng(1).standard_normal(len(t))
+    return lp(x, 3000) * np.minimum(1, t / 0.08) * np.minimum(1, (largo - t) / 0.15).clip(0, 1)
+
+
+def musica_boombap():
+    """Beat de hip hop chill: piano eléctrico jazzero, batería boom-bap con swing, bajo y flauta."""
+    rng = np.random.default_rng(33)
+    L, R = np.zeros(n(TOTAL + 4)), np.zeros(n(TOTAL + 4))
+
+    def poner(x, t, v=1.0, pan=0.0):
+        i = n(max(0.0, t))
+        x = x[: len(L) - i]
+        L[i:i + len(x)] += x * v * (1 - max(0, pan))
+        R[i:i + len(x)] += x * v * (1 + min(0, pan))
+
+    negra = 60 / 88
+    compas = 4 * negra
+    swing = 0.09 * negra
+    # Dm9 - G13 - Cmaj9 - Am7
+    acordes = [(38, [57, 60, 64, 65]), (43, [53, 59, 64, 65]), (36, [52, 55, 59, 62]), (45, [55, 60, 64, 67])]
+    frases = [[(0, 74, 1.5), (1.5, 72, 0.5), (2, 69, 2)], [(0.5, 71, 1), (1.5, 72, 0.5), (2, 74, 2)],
+              [(0, 76, 1), (1, 74, 1), (2, 71, 2)], [(0, 72, 1.5), (2, 69, 1.5), (3.5, 67, 0.5)]]
+    total_c = int(TOTAL / compas) + 1
+    for c in range(total_c):
+        t0 = c * compas
+        bajo, notas = acordes[c % 4]
+        final = total_c - c <= 3
+        seccion = (c - 4) // 16 if c >= 4 else -1
+        hueco = c >= 4 and (c - 4) % 16 in (14, 15)          # respiro cada 16 compases
+        for k, m in enumerate(notas):                        # acorde de piano eléctrico, un poco arpegiado
+            poner(rhodes(hz(m), compas * 1.1, 0.8), t0 + k * 0.012, 0.11, pan=-0.3 + 0.2 * k)
+        poner(rhodes(hz(notas[1]), negra * 2, 0.6), t0 + 2.5 * negra + swing, 0.07, pan=0.3)
+        if c < 2 or final:
+            continue
+        # bajo
+        poner(lp(bajo808(hz(bajo - 12), negra * 1.8), 400), t0, 0.5)
+        poner(lp(bajo808(hz(bajo - 12), negra * 0.9), 400), t0 + 2.5 * negra + swing, 0.4)
+        if hueco or c < 4:
+            for k in range(8):
+                poner(lp(hat(rng, 0.05), 9000), t0 + k * negra / 2 + (swing if k % 2 else 0), 0.2)
+            continue
+        # batería boom-bap con swing
+        for tb in (0, 1.5 * negra + swing, 2.75 * negra if c % 2 else 2.5 * negra + swing):
+            poner(lp(kick(), 1200), t0 + tb, 0.75)
+        for b in (1, 3):
+            poner(lp(snare(rng), 6000), t0 + b * negra, 0.42)
+        for k in range(8):
+            poner(lp(hat(rng, 0.05), 10000), t0 + k * negra / 2 + (swing if k % 2 else 0),
+                  0.3 if k % 2 == 0 else 0.18, pan=0.2)
+        if seccion % 2 == 1:                                 # en unas partes entra la flauta
+            for b, m, d in frases[c % 4]:
+                poner(flauta(hz(m), d * negra), t0 + b * negra, 0.13, pan=-0.15)
+    mezcla = np.stack([L, R], 1)
+    ir = rng.standard_normal((n(1.6), 2)) * np.exp(-np.arange(n(1.6)) / SR / 0.4)[:, None]
+    ir = np.stack([lp(ir[:, 0], 3500), lp(ir[:, 1], 3500)], 1) * 0.018
+    mezcla = mezcla + np.stack([signal.fftconvolve(mezcla[:, i], ir[:, i])[: len(mezcla)] for i in range(2)], 1)
+    t = np.arange(len(mezcla)) / SR
+    idx = np.clip(np.arange(len(mezcla)) - (0.003 + 0.0018 * np.sin(2 * np.pi * 0.35 * t)) * SR, 0, len(mezcla) - 1)
+    mezcla = np.stack([np.interp(idx, np.arange(len(mezcla)), mezcla[:, i]) for i in range(2)], 1)
+    mezcla = np.stack([lp(hp(mezcla[:, i], 40), 7000) for i in range(2)], 1)
+    crujido = np.zeros(len(mezcla))
+    pos = rng.integers(0, len(crujido) - 50, int(TOTAL * 6))
+    crujido[pos] = rng.uniform(-1, 1, len(pos)) * rng.uniform(0.1, 1, len(pos)) ** 3
+    mezcla += (hp(crujido, 1500) * 0.35 + lp(rng.standard_normal(len(crujido)), 1200) * 0.008)[:, None]
+    mezcla = mezcla[: n(TOTAL)]
+    mezcla = np.tanh(mezcla / np.abs(mezcla).max() * 1.4)
+    tt = np.arange(len(mezcla)) / SR
     vol = np.clip(np.minimum(tt / ENTRADA, (TOTAL - tt) / SALIDA), 0, 1) ** 1.2
     mezcla *= vol[:, None]
     return (mezcla / np.abs(mezcla).max() * 0.9).astype(np.float32)
