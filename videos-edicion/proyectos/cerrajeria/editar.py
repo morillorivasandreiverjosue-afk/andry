@@ -5,7 +5,7 @@
 3. Música propia generada con código (100 BPM) y efectos cuadrados con el beat:
    zoom en cada compás, sacudida y destello cuando se abre la puerta.
 
-Uso: python3 editar.py <video_original.mp4> <salida.mp4>
+Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow]
 """
 import subprocess
 import sys
@@ -32,6 +32,7 @@ TRAMOS = [
 ]
 DROP = 24.0              # momento (en el video final) en que se abre la puerta
 TOTAL = 28.8             # 12 compases
+ESTILO = sys.argv[3] if len(sys.argv) > 3 else "trap"
 
 
 # ---------------------------------------------------------------- imagen
@@ -53,8 +54,11 @@ def filtro_video():
 
 def efectos(cuadro, t, rng):
     """Zoom de golpe en cada compás, sacudida y destello en la apertura."""
-    zoom = 1.0 + 0.06 * np.exp(-((t % BAR) / 0.18))          # golpe en cada compás
-    if t >= BAR:                                             # golpecito en el tiempo 3 (aplauso)
+    if ESTILO == "dembow":                                   # golpe pequeño en cada tiempo
+        zoom = 1.0 + (0.035 * np.exp(-((t % BEAT) / 0.1)) if t >= BAR else 0.0)
+    else:
+        zoom = 1.0 + 0.06 * np.exp(-((t % BAR) / 0.18))      # golpe en cada compás
+    if t >= BAR and ESTILO != "dembow":                                             # golpecito en el tiempo 3 (aplauso)
         zoom += 0.025 * np.exp(-(((t - 2 * BEAT) % BAR) / 0.12))
     dx = dy = 0.0
     d = t - DROP
@@ -70,7 +74,12 @@ def efectos(cuadro, t, rng):
         cuadro = cuadro.transform((W, H), Image.AFFINE,
                                   (s, 0, cx - s * cx + dx, 0, s, cy - s * cy + dy), Image.BICUBIC)
     arr = np.asarray(cuadro).astype(np.float32)
-    if 0 <= d < 0.35:                                        # destello blanco
+    if ESTILO == "dembow" and 0 <= d < 0.6:                 # separación de colores (glitch)
+        o = int(28 * (1 - d / 0.6))
+        arr = arr.copy()
+        arr[:, :, 0] = np.roll(arr[:, :, 0], o, 1)
+        arr[:, :, 2] = np.roll(arr[:, :, 2], -o, 1)
+    elif 0 <= d < 0.35:                                      # destello blanco
         a = 0.85 * (1 - d / 0.35)
         arr = arr * (1 - a) + 255 * a
     if t < 0.5:                                              # entrada desde negro
@@ -139,6 +148,70 @@ def hz(midi):
 
 
 def musica():
+    return musica_dembow() if ESTILO == "dembow" else musica_trap()
+
+
+def snare(rng):
+    t = np.arange(n(0.2)) / SR
+    tono = np.sin(2 * np.pi * 190 * t) * np.exp(-t / 0.04)
+    return (hp(rng.standard_normal(len(t)), 1800) * np.exp(-t / 0.06) * 0.7 + tono * 0.5)
+
+
+def musica_dembow():
+    rng = np.random.default_rng(11)
+    L, R = np.zeros(n(TOTAL + 3)), np.zeros(n(TOTAL + 3))
+
+    def poner(x, t, v=1.0, pan=0.0):
+        i = n(t)
+        x = x[: len(L) - i]
+        L[i:i + len(x)] += x * v * (1 - max(0, pan))
+        R[i:i + len(x)] += x * v * (1 + min(0, pan))
+
+    acordes = [(50, [62, 65, 69]), (46, [62, 65, 70]), (53, [60, 65, 69]), (48, [60, 64, 67])]  # Dm Bb F C
+    melodia = [74, 0, 77, 74, 0, 72, 69, 0, 74, 0, 77, 79, 77, 0, 74, 72]  # semicorcheas de 2 en 2 (0 = silencio)
+    for c in range(int(TOTAL / BAR)):
+        t0 = c * BAR
+        raiz, notas = acordes[c % 4]
+        intro, subida, final = c == 0, c == 9, t0 >= DROP
+        poner(pad([hz(m) for m in notas], BAR + 0.3), t0, 0.45)
+        for k, m in enumerate(melodia):                      # marimba/pluck reguetonero
+            if m and not (intro and k % 4):
+                poner(pluck(hz(m - (12 if final else 0)), 0.35), t0 + k * BEAT / 4, 0.2,
+                      pan=-0.3 if k % 2 else 0.3)
+        if intro:
+            continue
+        for b in range(4):                                   # dembow: bum - ch - bum-chik
+            tb = t0 + b * BEAT
+            if not subida or b == 0:
+                poner(kick(), tb, 0.9)
+            if not subida:
+                poner(snare(rng), tb + 0.75 * BEAT, 0.55)
+                if b % 2 == 1:
+                    poner(snare(rng), tb + 0.5 * BEAT, 0.4)
+            for h in range(2):
+                poner(hat(rng, 0.04), tb + h * BEAT / 2 + BEAT / 4, 0.5, pan=0.25)
+        if not subida:
+            poner(bajo808(hz(raiz - 12), BAR * 0.95), t0, 0.55)
+        else:
+            for k in range(16):
+                poner(snare(rng), t0 + k * BEAT / 4, 0.1 + 0.5 * k / 16)
+            barrido = lp(rng.standard_normal(n(BAR)), 4000) * np.linspace(0, 0.45, n(BAR)) ** 2
+            poner(barrido, t0)
+    t = np.arange(n(2.5)) / SR
+    boom = np.sin(2 * np.pi * np.cumsum(32 + 90 * np.exp(-t / 0.07)) / SR) * np.exp(-t / 0.6)
+    poner(boom + lp(rng.standard_normal(len(t)), 3000) * np.exp(-t / 0.2) * 0.4, DROP, 1.0)
+    # sirena corta tipo 'air horn' en el golpe
+    th = np.arange(n(0.9)) / SR
+    horn = sum(np.sign(np.sin(2 * np.pi * f * th)) for f in (466, 470, 698)) * np.exp(-th / 0.5) * 0.08
+    poner(lp(horn, 3000), DROP + 0.02, 1.0)
+    mezcla = np.tanh(np.stack([L, R], 1)[: n(TOTAL)] * 1.3)
+    caida = np.ones(len(mezcla))
+    caida[-n(1.5):] = np.linspace(1, 0, n(1.5))
+    mezcla *= caida[:, None]
+    return (mezcla / np.abs(mezcla).max() * 0.95).astype(np.float32)
+
+
+def musica_trap():
     rng = np.random.default_rng(7)
     L, R = np.zeros(n(TOTAL + 3)), np.zeros(n(TOTAL + 3))
 
