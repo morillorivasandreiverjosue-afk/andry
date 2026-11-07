@@ -5,7 +5,7 @@
 3. Música propia generada con código (100 BPM) y efectos cuadrados con el beat:
    zoom en cada compás, sacudida y destello cuando se abre la puerta.
 
-Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow]
+Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow|nostalgico]
 """
 import subprocess
 import sys
@@ -33,6 +33,10 @@ TRAMOS = [
 DROP = 24.0              # momento (en el video final) en que se abre la puerta
 TOTAL = 28.8             # 12 compases
 ESTILO = sys.argv[3] if len(sys.argv) > 3 else "trap"
+if ESTILO == "nostalgico":   # video entero a velocidad normal, sin efectos, solo fundidos
+    TRAMOS = [(0.0, 42.4, 1.0)]
+    TOTAL = 45.0                 # el último cuadro (puerta abierta) se queda quieto mientras se apaga
+    ENTRADA, SALIDA = 3.0, 3.5   # segundos de fundido desde negro y hacia negro
 
 
 # ---------------------------------------------------------------- imagen
@@ -53,6 +57,12 @@ def filtro_video():
 
 
 def efectos(cuadro, t, rng):
+    if ESTILO == "nostalgico":
+        a = min(1.0, t / ENTRADA, (TOTAL - t) / SALIDA)
+        a = max(0.0, a) ** 1.6 if a < 1 else 1.0            # curva suave: aparece y se va poco a poco
+        if a >= 1:
+            return np.asarray(cuadro)
+        return (np.asarray(cuadro).astype(np.float32) * a).astype(np.uint8)
     """Zoom de golpe en cada compás, sacudida y destello en la apertura."""
     if ESTILO == "dembow":                                   # golpe pequeño en cada tiempo
         zoom = 1.0 + (0.035 * np.exp(-((t % BEAT) / 0.1)) if t >= BAR else 0.0)
@@ -148,7 +158,85 @@ def hz(midi):
 
 
 def musica():
+    if ESTILO == "nostalgico":
+        return musica_nostalgica()
     return musica_dembow() if ESTILO == "dembow" else musica_trap()
+
+
+def piano_suave(f, largo, fuerza=1.0):
+    t = np.arange(n(largo)) / SR
+    x = np.zeros_like(t)
+    for k in range(1, 9):
+        fk = f * k * np.sqrt(1 + 0.0004 * k * k)             # leve inarmonía de cuerda real
+        x += np.sin(2 * np.pi * fk * t) / k ** 1.6 * np.exp(-t * (0.9 + 0.7 * k))
+    x *= np.minimum(1, t / 0.006) * fuerza
+    return lp(x, 2600 + 1500 * fuerza)
+
+
+def musica_nostalgica():
+    """Piano lo-fi, cuerdas suaves, cinta que ondula y crujido de disco viejo."""
+    rng = np.random.default_rng(21)
+    largo = TOTAL + 4
+    L, R = np.zeros(n(largo)), np.zeros(n(largo))
+
+    def poner(x, t, v=1.0, pan=0.0):
+        i = n(t)
+        x = x[: len(L) - i]
+        L[i:i + len(x)] += x * v * (1 - max(0, pan))
+        R[i:i + len(x)] += x * v * (1 + min(0, pan))
+
+    negra = 60 / 70
+    compas = 4 * negra
+    # Fmaj7 - Em7 - Dm7 - Cmaj7 (bajada clásica que suena a recuerdo)
+    acordes = [(41, [57, 60, 64, 65]), (40, [55, 59, 62, 64]), (38, [53, 57, 60, 62]), (36, [52, 55, 59, 60])]
+    melodia = {0: [(0, 76), (1.5, 74), (2, 72)], 1: [(0, 71), (2, 67)], 2: [(0, 69), (1, 72), (2.5, 74)],
+               3: [(0, 72), (2, 71)]}
+    c = 0
+    while c * compas < TOTAL:
+        t0 = c * compas
+        bajo, notas = acordes[c % 4]
+        poner(piano_suave(hz(bajo), compas * 1.2, 0.8), t0, 0.35)
+        for k in range(8):                                   # arpegio en corcheas
+            m = notas[[0, 1, 2, 3, 2, 1, 2, 3][k]]
+            poner(piano_suave(hz(m), 2.0, 0.55 + 0.1 * rng.random()), t0 + k * negra / 2 + rng.normal(0, 0.008),
+                  0.16, pan=-0.25 + 0.5 * (k % 2))
+        if c >= 4:                                           # entra la melodía
+            for b, m in melodia[c % 4]:
+                poner(piano_suave(hz(m), 3.0, 0.9), t0 + b * negra, 0.24, pan=0.1)
+        poner(pad([hz(m - 12) for m in notas[:3]], compas + 0.6), t0, 0.35 if c >= 2 else 0.18)
+        if 4 <= c < 11:                                      # batería lo-fi muy suave
+            for b in range(4):
+                if b in (0, 2):
+                    poner(lp(kick(), 900), t0 + b * negra + (0.5 * negra if b == 2 else 0), 0.35)
+                if b in (1, 3):
+                    poner(lp(snare(rng), 3500), t0 + b * negra, 0.13)
+                for h in range(2):
+                    poner(lp(hat(rng, 0.04), 9000), t0 + b * negra + h * negra / 2 + 0.02, 0.18)
+        c += 1
+    mezcla = np.stack([L, R], 1)
+    # reverberación suave
+    ir = rng.standard_normal((n(2.2), 2)) * np.exp(-np.arange(n(2.2)) / SR / 0.55)[:, None]
+    ir = np.stack([lp(ir[:, 0], 3000), lp(ir[:, 1], 3000)], 1) * 0.02
+    mezcla = mezcla + np.stack([signal.fftconvolve(mezcla[:, i], ir[:, i])[: len(mezcla)] for i in range(2)], 1)
+    # cinta vieja: el tono ondula un poquito (wow & flutter)
+    t = np.arange(len(mezcla)) / SR
+    retraso = 0.0025 * np.sin(2 * np.pi * 0.45 * t) + 0.0004 * np.sin(2 * np.pi * 6.0 * t)
+    idx = np.clip(np.arange(len(mezcla)) - (retraso + 0.003) * SR, 0, len(mezcla) - 1)
+    mezcla = np.stack([np.interp(idx, np.arange(len(mezcla)), mezcla[:, i]) for i in range(2)], 1)
+    mezcla = np.stack([lp(hp(mezcla[:, i], 60), 5500) for i in range(2)], 1)  # sonido cálido de radio vieja
+    # crujido de disco
+    crujido = np.zeros(len(mezcla))
+    pos = rng.integers(0, len(crujido) - 50, int(TOTAL * 9))
+    crujido[pos] = rng.uniform(-1, 1, len(pos)) * rng.uniform(0.1, 1, len(pos)) ** 3
+    crujido = hp(crujido, 1500) * 0.5 + lp(rng.standard_normal(len(crujido)), 1200) * 0.012
+    mezcla += crujido[:, None] * np.array([0.9, 1.0])
+    mezcla = mezcla[: n(TOTAL)]
+    mezcla /= np.abs(mezcla).max()
+    mezcla = np.tanh(mezcla * 1.2)
+    tt = np.arange(len(mezcla)) / SR                          # fundidos iguales al video
+    vol = np.clip(np.minimum(tt / ENTRADA, (TOTAL - tt) / SALIDA), 0, 1) ** 1.2
+    mezcla *= vol[:, None]
+    return (mezcla / np.abs(mezcla).max() * 0.9).astype(np.float32)
 
 
 def snare(rng):
