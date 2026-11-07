@@ -47,6 +47,10 @@ def filtro_video():
              "eq=gamma=1.08:saturation=1.05:contrast=1.06,"
              "hqdn3d=2:2:4:4,"
              f"scale={W}:-2:flags=lanczos,crop={W}:{H},cas=0.5,fps={FPS}")
+    if ESTILO == "nostalgico":   # tono apagado: gris, negros lavados y un toque de azul
+        color += (",eq=saturation=0.38:contrast=0.88:brightness=-0.02,"
+                  "curves=r='0/0.09 0.5/0.47 1/0.88':g='0/0.10 0.5/0.49 1/0.90':b='0/0.15 0.5/0.54 1/0.93',"
+                  "vignette=angle=PI/4.5")
     partes, nombres = [], []
     for i, (a, b, v) in enumerate(TRAMOS):
         partes.append(f"[0:v]trim={a}:{b},setpts=(PTS-STARTPTS)/{v}[t{i}]")
@@ -56,13 +60,50 @@ def filtro_video():
     return ";".join(partes)
 
 
+TITULO = "APERTURA DE CARRO"
+TITULO_ENTRA, TITULO_SALE = (1.2, 2.4), (5.0, 6.4)    # aparece poco a poco y luego se va
+
+
+def capa_titulo():
+    from PIL import ImageDraw, ImageFilter, ImageFont
+    fuente = ImageFont.truetype("/usr/share/fonts/opentype/inter/Inter-Light.otf", 76)
+    espacio = 14                                              # letras separadas, estilo elegante
+    anchos = [fuente.getlength(ch) for ch in TITULO]
+    total = sum(anchos) + espacio * (len(TITULO) - 1)
+    capa = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(capa)
+    x, y = (W - total) / 2, H * 0.44
+    for ch, a in zip(TITULO, anchos):
+        d.text((x, y), ch, font=fuente, fill=(240, 242, 246, 255))
+        x += a + espacio
+    linea_y = y + 118
+    d.line([(W / 2 - 120, linea_y), (W / 2 + 120, linea_y)], fill=(240, 242, 246, 200), width=2)
+    sombra = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sombra.putalpha(capa.getchannel("A").filter(ImageFilter.GaussianBlur(10)).point(lambda v: v * 0.55))
+    fondo = Image.alpha_composite(sombra, capa)
+    rgb = np.asarray(fondo.convert("RGB")).astype(np.float32)
+    alfa = np.asarray(fondo.getchannel("A")).astype(np.float32)[:, :, None] / 255
+    return rgb, alfa
+
+
+_TITULO = None
+
+
 def efectos(cuadro, t, rng):
     if ESTILO == "nostalgico":
+        global _TITULO
+        arr = np.asarray(cuadro).astype(np.float32)
+        (e0, e1), (s0, s1) = TITULO_ENTRA, TITULO_SALE
+        if e0 < t < s1:
+            if _TITULO is None:
+                _TITULO = capa_titulo()
+            k = min(1.0, (t - e0) / (e1 - e0), (s1 - t) / (s1 - s0))
+            k = k * k * (3 - 2 * k)                             # transición suave
+            rgb, alfa = _TITULO
+            arr = arr * (1 - alfa * k) + rgb * alfa * k
         a = min(1.0, t / ENTRADA, (TOTAL - t) / SALIDA)
         a = max(0.0, a) ** 1.6 if a < 1 else 1.0            # curva suave: aparece y se va poco a poco
-        if a >= 1:
-            return np.asarray(cuadro)
-        return (np.asarray(cuadro).astype(np.float32) * a).astype(np.uint8)
+        return np.clip(arr * a, 0, 255).astype(np.uint8)
     """Zoom de golpe en cada compás, sacudida y destello en la apertura."""
     if ESTILO == "dembow":                                   # golpe pequeño en cada tiempo
         zoom = 1.0 + (0.035 * np.exp(-((t % BEAT) / 0.1)) if t >= BAR else 0.0)
