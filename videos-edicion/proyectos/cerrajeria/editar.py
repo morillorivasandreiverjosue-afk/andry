@@ -5,7 +5,7 @@
 3. Música propia generada con código (100 BPM) y efectos cuadrados con el beat:
    zoom en cada compás, sacudida y destello cuando se abre la puerta.
 
-Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow|nostalgico]
+Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow|nostalgico|selectivo]
 """
 import subprocess
 import sys
@@ -33,7 +33,9 @@ TRAMOS = [
 DROP = 24.0              # momento (en el video final) en que se abre la puerta
 TOTAL = 28.8             # 12 compases
 ESTILO = sys.argv[3] if len(sys.argv) > 3 else "trap"
-if ESTILO == "nostalgico":   # video entero a velocidad normal, sin efectos, solo fundidos
+SELECTIVO = ESTILO == "selectivo"          # blanco y negro con el rojo y el azul resaltados, salida 4K
+NOSTALGICO = ESTILO in ("nostalgico", "selectivo")
+if NOSTALGICO:   # video entero a velocidad normal, sin efectos, solo fundidos
     TRAMOS = [(0.0, 42.4, 1.0)]
     TOTAL = 45.0                 # el último cuadro (puerta abierta) se queda quieto mientras se apaga
     ENTRADA, SALIDA = 3.0, 3.5   # segundos de fundido desde negro y hacia negro
@@ -47,7 +49,9 @@ def filtro_video():
              "eq=gamma=1.08:saturation=1.05:contrast=1.06,"
              "hqdn3d=2:2:4:4,"
              f"scale={W}:-2:flags=lanczos,crop={W}:{H},cas=0.5,fps={FPS}")
-    if ESTILO == "nostalgico":   # tono apagado: gris, negros lavados y un toque de azul
+    if SELECTIVO:    # contraste limpio, sin quemar los blancos
+        color += ",curves=all='0/0.02 0.25/0.21 0.75/0.80 1/0.95'"
+    elif NOSTALGICO:   # tono apagado: gris, negros lavados y un toque de azul
         color += (",eq=saturation=0.38:contrast=0.88:brightness=-0.02,"
                   "curves=r='0/0.09 0.5/0.47 1/0.88':g='0/0.10 0.5/0.49 1/0.90':b='0/0.15 0.5/0.54 1/0.93',"
                   "vignette=angle=PI/4.5")
@@ -89,10 +93,27 @@ def capa_titulo():
 _TITULO = None
 
 
+def color_selectivo(arr):
+    """Todo en gris menos el rojo del carro y los azules fuertes."""
+    h, s, _ = [np.asarray(c).astype(np.float32) for c in Image.fromarray(arr.astype(np.uint8)).convert("HSV").split()]
+    h = h * 360 / 255
+
+    def banda(c, ancho, suave):
+        d = np.abs((h - c + 180) % 360 - 180)
+        return np.clip(1 - (d - ancho) / suave, 0, 1)
+    rojo = banda(352, 9, 8) * np.clip((s - 110) / 50, 0, 1)
+    azul = banda(222, 12, 10) * np.clip((s - 165) / 45, 0, 1) * 0.75
+    w = np.maximum(rojo, azul)[..., None] * 1.35
+    gris = (arr @ np.array([0.299, 0.587, 0.114], np.float32))[..., None]
+    return np.clip(gris + (arr - gris) * w, 0, 255)
+
+
 def efectos(cuadro, t, rng):
-    if ESTILO == "nostalgico":
+    if NOSTALGICO:
         global _TITULO
         arr = np.asarray(cuadro).astype(np.float32)
+        if SELECTIVO:
+            arr = color_selectivo(arr)
         (e0, e1), (s0, s1) = TITULO_ENTRA, TITULO_SALE
         if e0 < t < s1:
             if _TITULO is None:
@@ -199,7 +220,7 @@ def hz(midi):
 
 
 def musica():
-    if ESTILO == "nostalgico":
+    if NOSTALGICO:
         return musica_nostalgica()
     return musica_dembow() if ESTILO == "dembow" else musica_trap()
 
@@ -419,7 +440,9 @@ def main():
                                 "-map", "[v]", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
         escribe = subprocess.Popen(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                                     "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-i", str(wav),
-                                    "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p",
+                                    *(["-vf", "scale=2160:3840:flags=lanczos,cas=0.6", "-preset", "medium"]
+                                      if SELECTIVO else ["-preset", "slow"]),
+                                    "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
                                     "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart",
                                     str(salida)], stdin=subprocess.PIPE)
         rng = np.random.default_rng(3)
