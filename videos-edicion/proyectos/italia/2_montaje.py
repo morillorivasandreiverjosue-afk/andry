@@ -517,16 +517,20 @@ class Render:
                 fr = poner_capa(fr, self.cierre, suave((t - fin - 0.3) / 0.8))
                 fr = fr * (1 - suave((t - (tl["total"] - 1.5)) / 1.5))
         fr = fr * self.vin
-        g = self.grano[n % len(self.grano)]
-        fr = fr + g
-        fr = poner_capa(fr, self.marca, 1.0 if t > 10.5 else suave((t - 0.5) / 1.0) * 0.0 + (t > 10.5))
-        return (np.clip(fr, 0, 1) * 255).astype(np.uint8)
+        fr += self.grano[n % len(self.grano)]
+        if t > 10.5:  # marca del canal: solo se mezcla la zona de la esquina
+            y0, y1, x0 = 20, 95, 1200
+            rgb, a = self.marca
+            fr[y0:y1, x0:] = fr[y0:y1, x0:] * (1 - a[y0:y1, x0:]) + rgb[y0:y1, x0:] * a[y0:y1, x0:]
+        np.clip(fr, 0, 1, out=fr)
+        fr *= 255
+        return fr.astype(np.uint8)
 
 
 def trozo(sal, tl, n0, n1, ruta):
     r = Render(sal, tl)
     p = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-                          "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "19",
+                          "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
                           "-pix_fmt", "yuv420p", str(ruta)], stdin=subprocess.PIPE)
     for n in range(n0, n1):
         p.stdin.write(r.cuadro(n).tobytes())
