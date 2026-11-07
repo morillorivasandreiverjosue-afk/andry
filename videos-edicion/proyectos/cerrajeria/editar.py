@@ -5,7 +5,7 @@
 3. Música propia generada con código (100 BPM) y efectos cuadrados con el beat:
    zoom en cada compás, sacudida y destello cuando se abre la puerta.
 
-Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow|nostalgico|selectivo]
+Uso: python3 editar.py <video_original.mp4> <salida.mp4> [trap|dembow|nostalgico|selectivo|byn]
 """
 import subprocess
 import sys
@@ -33,8 +33,8 @@ TRAMOS = [
 DROP = 24.0              # momento (en el video final) en que se abre la puerta
 TOTAL = 28.8             # 12 compases
 ESTILO = sys.argv[3] if len(sys.argv) > 3 else "trap"
-SELECTIVO = ESTILO == "selectivo"          # blanco y negro con el rojo y el azul resaltados, salida 4K
-NOSTALGICO = ESTILO in ("nostalgico", "selectivo")
+SELECTIVO = ESTILO in ("selectivo", "byn")  # blanco y negro (selectivo: con rojo y azul), salida 4K
+NOSTALGICO = ESTILO in ("nostalgico", "selectivo", "byn")
 if NOSTALGICO:   # video entero a velocidad normal, sin efectos, solo fundidos
     TRAMOS = [(0.0, 42.4, 1.0)]
     TOTAL = 45.0                 # el último cuadro (puerta abierta) se queda quieto mientras se apaga
@@ -94,7 +94,9 @@ _TITULO = None
 
 
 def color_selectivo(arr):
-    """Todo en gris menos el rojo del carro y los azules fuertes."""
+    """Todo en gris menos el rojo del carro y los azules fuertes (en 'byn', todo en gris)."""
+    if ESTILO == "byn":
+        return np.repeat(arr @ np.array([0.299, 0.587, 0.114], np.float32), 3).reshape(arr.shape)
     h, s, _ = [np.asarray(c).astype(np.float32) for c in Image.fromarray(arr.astype(np.uint8)).convert("HSV").split()]
     h = h * 360 / 255
 
