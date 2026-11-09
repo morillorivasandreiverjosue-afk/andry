@@ -10,11 +10,12 @@ def load(f):
 pieces=[]; marks=[]; out=[np.zeros(int(PRE*SR),np.float32)]; t=PRE
 for c in C:
     fi=c['file']; x=load(f"{S}/audio/a{fi+1}.mp3"); pos=0.0
-    for cs,ce,lab in c['cuts']:
+    for cut in c['cuts']:
+        cs,ce,lab=cut[:3]; extra=cut[3] if len(cut)>3 else 0.0; extra_e=cut[4] if len(cut)>4 else 0.0
         if cs>pos+0.01:
             seg=x[int(pos*SR):int(cs*SR)]; pieces.append([fi,pos,cs,t]); out.append(seg); t+=len(seg)/SR
-        g=GAP if t>PRE+0.1 else 0.0   # al inicio no hace falta pausa extra (ya está la apertura)
-        marks.append([lab,t,t+g])     # tarjeta empieza en t; la voz (título) empieza en t+g
+        g=(GAP+extra+extra_e) if t>PRE+0.1 else 0.0   # al inicio no hace falta pausa extra (ya está la apertura)
+        marks.append([lab,t+extra,t+g])     # tarjeta empieza en t; la voz (título) empieza en t+g
         out.append(np.zeros(int(g*SR),np.float32)); t+=g
         pos=ce
     seg=x[int(pos*SR):]; pieces.append([fi,pos,len(x)/SR,t]); out.append(seg); t+=len(seg)/SR

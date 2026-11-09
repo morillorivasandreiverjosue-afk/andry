@@ -40,7 +40,6 @@ def logo():
     t1="CURIOSIDADES"; t2="DEL MUNDO"
     w1=d.textlength(t1,font=f1)
     x1=W-50-w1; y=38
-    globe(d,x1-40,y+30,24,WHITE,3)
     d.text((x1,y),t1,font=f1,fill=WHITE)
     d.rectangle((x1,y+58,x1+44,y+62),fill=RED)
     spaced(d,(x1+54,y+50),t2,f2,GREY,7)
@@ -101,7 +100,7 @@ def apertura():
 def cierre():
     im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
     fT=font("bebas",120); f2=font("oswald",40)
-    cx=W/2; globe(d,cx,330,70,WHITE,5)
+    cx=W/2
     d.text((cx,470),"CURIOSIDADES DEL MUNDO",font=fT,fill=WHITE,anchor="mt")
     # botón suscríbete
     bw,bh=520,96; d.rounded_rectangle((cx-bw/2,650,cx+bw/2,650+bh),radius=14,fill=RED)
@@ -146,7 +145,14 @@ ROT=[("r0846","08:46 AM","Vuelo American Airlines 11\nimpacta la Torre Norte"),
  ("rtsa","NOV. 2001","Se crea la TSA\n(seguridad en el transporte)"),
  ("r110","110 PISOS","Torre Norte y Torre Sur\n417 y 415 metros"),
 ]
-logo(); apertura(); cierre(); vineta()
+def frase():
+    im=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(im)
+    f1=font("bebas",120); f2=font("bebas",150)
+    d.text((W/2,H/2-80),"PERO LO PEOR",font=f1,fill=(225,225,225),anchor="mm")
+    d.text((W/2,H/2+60),"TODAVÍA ESTABA POR LLEGAR",font=f2,fill=WHITE,anchor="mm")
+    d.rectangle((W/2-60,H/2+165,W/2+60,H/2+171),fill=RED)
+    im.save(f"{O}/frase.png")
+logo(); apertura(); cierre(); vineta(); frase()
 for i,(n,t) in enumerate(CARDS): card(i,n,t,f"card{i:02d}.png")
 for r in ROT: rotulo(r[0]+".png",r[1],r[2])
 print("ok")

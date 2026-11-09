@@ -8,6 +8,7 @@ from shots import SHOTS, END, OVERLAYS, CLIPSOUND
 V=f"{S}/media/vid"; I=f"{S}/media/img"; R=f"{S}/ref"
 REF={"ref1":f"{R}/WhatsApp Video 2026-11-08 at 1.38.22 PM.mp4","ref2":f"{R}/WhatsApp Video 2026-11-08 at 1.38.26 PM.mp4"}
 def path(src):
+    if src.startswith("/"): return src
     if src in REF: return REF[src]
     if "/" in src and not src.startswith("/"): return f"{I}/{src}.jpg"
     return f"{V}/{src}"
@@ -67,7 +68,7 @@ def final(t_from=None,t_to=None,name="documental.mp4"):
     G=f"{B}/gfx"
     inp=["-i",f"{B}/base.mp4"]; fc=[]; n=1
     # audio: narración, música, efectos y sonido original de algunos clips
-    ainp=["-i",f"{B}/narr.wav","-i",f"{B}/music.wav","-i",f"{B}/sfx.wav"]
+    ainp=["-i",f"{B}/narr.wav","-i",f"{B}/sfx_doc.wav"]
     last="[0:v]"
     ov=OVERLAYS
     for k,(png,a,b,fi,fo) in enumerate(ov):
@@ -85,13 +86,12 @@ def final(t_from=None,t_to=None,name="documental.mp4"):
     mixin=[]
     for k,(src,ss,t0,dur,vol) in enumerate(CLIPSOUND):
         inp+=["-ss",f"{ss:.3f}","-t",f"{dur:.3f}","-i",path(src)]
-        fc.append(f"[{na+3+k}:a]aformat=sample_rates=44100:channel_layouts=stereo,afade=t=in:d=0.3,afade=t=out:st={dur-0.6:.3f}:d=0.6,volume={vol},adelay={int(t0*1000)}|{int(t0*1000)}[cs{k}]")
+        fc.append(f"[{na+2+k}:a]aformat=sample_rates=44100:channel_layouts=stereo,afade=t=in:d=0.3,afade=t=out:st={dur-0.6:.3f}:d=0.6,volume={vol},adelay={int(t0*1000)}|{int(t0*1000)}[cs{k}]")
         mixin.append(f"[cs{k}]")
     fc.append(f"[{na}:a]aformat=sample_rates=44100:channel_layouts=stereo,highpass=f=70,acompressor=threshold=-20dB:ratio=3:attack=5:release=120:makeup=2,volume=1.0,asplit[nv][key]")
-    fc.append(f"[{na+1}:a]volume=0.36[mus]")
-    fc.append(f"[mus][key]sidechaincompress=threshold=0.04:ratio=6:attack=40:release=600[mduck]")
-    fc.append(f"[{na+2}:a]volume=0.8[fx]")
-    fc.append(f"[nv][mduck][fx]{''.join(mixin)}amix=inputs={3+len(mixin)}:normalize=0:duration=longest,alimiter=limit=0.95,atrim=0:{END:.3f}[aout]")
+    fc.append(f"[{na+1}:a]volume=0.8[fx]")
+    fc.append(f"[key]anullsink")
+    fc.append(f"[nv][fx]{''.join(mixin)}amix=inputs={2+len(mixin)}:normalize=0:duration=longest,alimiter=limit=0.95,atrim=0:{END:.3f}[aout]")
     cmd=["ffmpeg","-v","error","-stats","-y",*inp,"-filter_complex",";".join(fc),"-map","[vout]","-map","[aout]",
          "-c:v","libx264","-preset","faster","-crf","21","-tune","grain","-pix_fmt","yuv420p","-c:a","aac","-b:a","192k","-movflags","+faststart"]
     if t_from is not None: cmd+=["-ss",str(t_from),"-to",str(t_to)]

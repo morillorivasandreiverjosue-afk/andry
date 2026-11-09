@@ -52,7 +52,7 @@ SHOTS=[
 (139.0,Im("wtc1993/02",V("torri99.webm",270))),
 (144.0,Im("wtc1993/01",V("torri99.webm",280))),
 (150.7,Im("wtc1993/03",V("torri99.webm",270))),
-(156.4,V("wtc_old.webm",248,z=(1.0,1.1))),
+(156.4,V("wtc_old.webm",242,z=(1.0,1.1))),
 (162.1,V("torri99.webm",216)),
 (MARKS[2],Im("binladen/01",V("nist_peskin.webm",2200),z=(1.1,1.0))),
 (170.0,Im("binladen/02",V("nist_peskin.webm",2280))),
@@ -77,9 +77,9 @@ SHOTS=[
 (276.0,P("nist_falling.webm",128)),
 (280.9,P("nist_falling.webm",225)),
 (285.7,P("nist_falling.webm",400)),
-(289.8,P("nist_falling.webm",700)),
-(293.0,V("nist_peskin.webm",262)),
-(295.6,R1(8.0,z=(1.0,1.04))),
+(289.8,P("nist_falling.webm",232)),
+(292.3,{"src":"black","black":True}),
+(295.3,R1(7.7,z=(1.0,1.04))),
 (302.2,R2(7.5)),
 (307.1,Im("impact/01",R1(15.0))),
 (311.8,V("nist_peskin.webm",540)),
@@ -132,7 +132,7 @@ SHOTS=[
 (556.5,Im("tribute/01",V("memorial_plaza.webm",14))),
 (560.0,Im("missing/01",V("memorial_plaza.webm",40),pan=(0.4,0))),
 (565.5,Im("tribute/02",V("memorial_plaza.webm",126))),
-(MARKS[7],V("bush_address.mov",5,z=(1.1,1.0))),
+(MARKS[7],V("bush_address.mov",7,z=(1.1,1.0))),
 (576.0,V("bush_address.mov",30)),
 (582.5,V("bush_address.mov",120,z=ZO)),
 (586.7,V("bullhorn.webm",15)),
@@ -196,8 +196,15 @@ for name,t in [("r110",113.4),("r1993",145.6),("r19",198.2),("r0846",259.5),("r0
                ("r1003",377.6),("r0959",420.9),("r1028",446.4),("r2977",509.0),("r343",539.5),
                ("r2001",593.7),("r2011",611.1),("rtsa",651.0),("r1wtc",718.6)]:
     OVERLAYS+=rot(name,t)
-OVERLAYS+=[("oscuro.png",809.6,END,0.8,0),("cierre.png",809.9,END,0.4,0)]
+OVERLAYS+=[("oscuro.png",809.6,END,0.8,0),("cierre.png",809.9,END,0.4,0),("frase.png",292.6,295.3,0.5,0.12)]
 # ---- sonido original de algunos clips (fuente, inicio en fuente, inicio en video, duración, volumen)
-CLIPSOUND=[("ref1",12.6,42.6,5.6,0.30),("ref2",0.0,258.8,7.5,0.35),("ref1",8.0,295.6,6.6,0.35),
-           ("ref2",7.5,302.2,4.9,0.20),("nist_falling.webm",905,420.4,7.6,0.35),("nist_peskin.webm",1592,445.9,5.8,0.30),
-           ("bullhorn.webm",60,591.8,5.4,0.12)]
+_B=f"{_S}/build"
+CLIPSOUND=[("ref1",12.6,42.6,5.6,0.40),(f"{_B}/ref2_sonido.wav",0.0,258.8,7.5,0.55),("ref1",7.7,295.3,6.9,0.55),
+           (f"{_B}/ref2_fuego.wav",0.0,302.2,4.9,0.35),("ref1",15.0,307.1,4.7,0.25),
+           ("nist_falling.webm",905,420.4,7.6,0.45),("nist_peskin.webm",1592,445.9,5.8,0.40)]
+# ambiente real (sirenas, gente, calle) bajo la narración en el material del NIST
+_ya={round(c[2],1) for c in CLIPSOUND}
+for _i,(_t,_sh) in enumerate(SHOTS):
+    if _sh.get("src") in ("nist_falling.webm","nist_peskin.webm","bullhorn.webm") and round(_t,1) not in _ya:
+        _t1=SHOTS[_i+1][0] if _i+1<len(SHOTS) else END
+        CLIPSOUND.append((_sh["src"],_sh["ss"],_t,_t1-_t,0.10 if _sh["src"]=="bullhorn.webm" else 0.16))
