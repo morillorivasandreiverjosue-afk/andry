@@ -111,7 +111,7 @@ def cierre():
 def vineta():
     import numpy as np
     y,x=np.mgrid[0:H,0:W]; r=np.sqrt(((x-W/2)/(W/2))**2+((y-H/2)/(H/2))**2)
-    a=np.clip((r-0.55)/0.75,0,1)**1.6*200
+    a=np.clip((r-0.80)/0.65,0,1)**1.8*120
     im=Image.fromarray(np.dstack([np.zeros((H,W,3),np.uint8),a.astype(np.uint8)]),"RGBA"); im.save(f"{O}/vineta.png")
     # degradado para tarjetas (oscurece la izquierda)
     a=np.clip(1.15-x/W*1.0,0.35,1)*215

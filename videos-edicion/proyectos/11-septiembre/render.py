@@ -88,7 +88,7 @@ def final(t_from=None,t_to=None,name="documental.mp4"):
         fc.append(f"[{na+3+k}:a]aformat=sample_rates=44100:channel_layouts=stereo,afade=t=in:d=0.3,afade=t=out:st={dur-0.6:.3f}:d=0.6,volume={vol},adelay={int(t0*1000)}|{int(t0*1000)}[cs{k}]")
         mixin.append(f"[cs{k}]")
     fc.append(f"[{na}:a]aformat=sample_rates=44100:channel_layouts=stereo,highpass=f=70,acompressor=threshold=-20dB:ratio=3:attack=5:release=120:makeup=2,volume=1.0,asplit[nv][key]")
-    fc.append(f"[{na+1}:a]volume=0.55[mus]")
+    fc.append(f"[{na+1}:a]volume=0.36[mus]")
     fc.append(f"[mus][key]sidechaincompress=threshold=0.04:ratio=6:attack=40:release=600[mduck]")
     fc.append(f"[{na+2}:a]volume=0.8[fx]")
     fc.append(f"[nv][mduck][fx]{''.join(mixin)}amix=inputs={3+len(mixin)}:normalize=0:duration=longest,alimiter=limit=0.95,atrim=0:{END:.3f}[aout]")
