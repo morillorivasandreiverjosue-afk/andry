@@ -1,0 +1,27 @@
+CRÉDITOS DEL MATERIAL DE ARCHIVO (Wikimedia Commons)
+
+Videos (dominio público, gobierno de EE. UU.):
+- NIST FOIA 09-42 — "WTC2 Falling Debris, 9:59am" y "Peskin 01-44 (WTC2 Fireball, WTC1, WTC7)" — National Institute of Standards and Technology
+- Pentagon Security Camera 1 y 2 — Departamento de Defensa de EE. UU.
+- Address to the Nation, 11 de septiembre de 2001 — Casa Blanca / NARA
+- Discurso con megáfono en Ground Zero, 14/09/2001 — Casa Blanca
+- President Obama on Death of Osama bin Laden — Casa Blanca
+- AIT Passenger Checkpoint Video — TSA
+- NIST WTC 7 collapse model — NIST
+- One World Trade Center zoom out from Crown — dominio público
+- "World trade center" (película de los años 70) — dominio público
+Videos con licencia Creative Commons:
+- "Torri Gemelle - WTC - New York - Sept 99" — CC BY-SA 3.0
+- "Ground Zero - Memorial Plaza" — CC BY-SA 3.0
+- "Aerial views of World Trade Center, Freedom Tower, The Oculus and Battery Park City" — CC BY 3.0
+Fotos: Wikimedia Commons (dominio público y CC BY / CC BY-SA), entre ellas
+"WTC smoking on 9-11", "National Park Service 9-11 Statue of Liberty and WTC fire",
+"UA Flight 175 hits WTC south tower 9-11 edit" (CC BY-SA 2.0, Robert J. Fisch),
+"WTC 1993 ATF", "Wtc arial march2001", "Twin Towers-NYC" (CC BY-SA), "Osama bin Laden portrait",
+"Hamid Mir interviewing Osama bin Laden" (CC BY-SA), "Aerial view of the Pentagon during rescue operations",
+"9-11 Pentagon Emergency Response", "WTC-Fireman requests 10 more colleagues", "Ground zero",
+"Obama and Biden await updates on bin Laden", "Flight 93 National Memorial", "Tribute in Light 2016",
+"9-11 Memorial North Pool", "9-11 Memorial South Pool", "One World Trade Center".
+Videos aportados por el autor: 2 clips del 11 de septiembre (WhatsApp).
+Música y efectos: generados por código (sonido.py del proyecto Napoleón).
+Tipografías: Bebas Neue, Oswald, Inter (SIL Open Font License).
