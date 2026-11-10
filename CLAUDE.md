@@ -52,6 +52,5 @@ Proyecto de referencia (ya aprobado por el usuario): `videos-edicion/proyectos/1
 
 ## 6. Entrega
 - Exportar en **4K (3840x2160)** y también en 1080p. El límite para enviar archivos al usuario es de ~400 MB:
-  ajustar la tasa de bits para que quepa. Usar **H.264** (no HEVC/H.265): en el celular del usuario
-  el HEVC solo reproducía el audio, sin imagen.
+  ajustar la tasa de bits para que quepa (HEVC para la 4K).
 - Avisar al usuario cuánto falta cuando lo pregunte, y hablarle en español.
