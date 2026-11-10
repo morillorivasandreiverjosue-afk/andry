@@ -183,7 +183,7 @@ def main():
         f"[1:v]setpts=PTS-STARTPTS[v2];[1:a]asetpts=PTS-STARTPTS[a2];"
         f"[0:v]trim=start={t_c},setpts=PTS-STARTPTS[v3];[0:a]atrim=start={t_c},asetpts=PTS-STARTPTS,afade=t=in:d=0.3[a3];"
         "[v1][a1][v2][a2][v3][a3]concat=n=3:v=1:a=1[v][a]",
-        "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-b:v", "1850k", "-maxrate", "2500k",
+        "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-b:v", "1750k", "-maxrate", "2400k",
         "-bufsize", "5000k", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
         str(final)], check=True)
     print("Listo:", final)
