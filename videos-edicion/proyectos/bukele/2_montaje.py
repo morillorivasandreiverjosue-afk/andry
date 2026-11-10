@@ -264,8 +264,10 @@ def mapa_base(cual, marca=None):
         for nombre, (lo, la), dx in [("San Salvador", (-89.19, 13.69), -1), ("Puerto Príncipe", (-72.34, 18.54), 1)]:
             x, y = px(lo, la)
             d.ellipse([x - 10, y - 10, x + 10, y + 10], fill=(255, 255, 255))
-            d.text((x + 26 * dx, y + (30 if dx > 0 else -24)), nombre, font=mont(36, 600), fill=(255, 255, 255),
-                   anchor="la" if dx > 0 else "rs")
+            if dx > 0:
+                d.text((x, y + 34), nombre, font=mont(36, 600), fill=(255, 255, 255), anchor="ma")
+            else:
+                d.text((x - 26, y - 24), nombre, font=mont(36, 600), fill=(255, 255, 255), anchor="rs")
         texto_espaciado(d, px(-88.9, 12.6), "EL SALVADOR", oswald(40, 600), (255, 255, 255), 5, "mm")
         texto_espaciado(d, px(-72.6, 19.9), "HAITÍ", oswald(46, 600), (255, 255, 255), 6, "mm")
         texto_espaciado(d, px(-79.5, 13.5), "MAR CARIBE", oswald(36, 300), (70, 96, 120), 12, "mm")

@@ -243,3 +243,48 @@ def creditos_api(titulos):
         CREDITOS.write_text(json.dumps(cred, ensure_ascii=False, indent=1))
         print("créditos:", len(cred), flush=True)
         time.sleep(5)
+
+
+def openverse_busqueda(consulta, filtro_titulo, maximo=12):
+    """Busca en Openverse y descarga directamente desde los resultados (sin la ficha individual)."""
+    MATERIAL.mkdir(exist_ok=True)
+    cred = json.loads(CREDITOS.read_text()) if CREDITOS.exists() else {}
+    url = OPENVERSE + "?" + urllib.parse.urlencode({"q": consulta, "page_size": 20,
+                                                    "license": "cc0,pdm,by,by-sa"})
+    d = None
+    for intento in range(5):
+        try:
+            d = json.load(urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": UA}),
+                                                 timeout=60))
+            break
+        except Exception as e:  # noqa: BLE001
+            print("  reintento búsqueda", e, file=sys.stderr, flush=True)
+            time.sleep(8 * (intento + 1))
+    if d is None:
+        return
+    n = 0
+    for r in d.get("results", []):
+        if filtro_titulo.lower() not in (r.get("title") or "").lower() or n >= maximo:
+            continue
+        if r["license"] not in ("cc0", "pdm", "by", "by-sa"):
+            continue
+        nombre = f"ov_{r['id'][:8]}.jpg"
+        dest = MATERIAL / nombre
+        if not dest.exists():
+            u = r["url"]
+            if "upload.wikimedia.org" in u and (r.get("width") or 0) > 1920:
+                u = url_directa(urllib.parse.unquote(u.rsplit("/", 1)[1]), 1920)
+            res = subprocess.run(["curl", "-sS", "-L", "-f", "-m", "120", "-A", UA, "-o", str(dest), u],
+                                 capture_output=True, text=True)
+            if res.returncode != 0:
+                dest.unlink(missing_ok=True)
+                print("FALLO", nombre, res.stderr.strip()[:80], flush=True)
+                continue
+        lic = {"cc0": "CC0", "pdm": "Dominio público"}.get(r["license"],
+                                                          f"CC {r['license'].upper()} {r.get('license_version', '')}")
+        cred[nombre] = {"titulo": r.get("title"), "autor": r.get("creator"), "licencia": lic.strip(),
+                        "pagina": r.get("foreign_landing_url")}
+        CREDITOS.write_text(json.dumps(cred, ensure_ascii=False, indent=1))
+        n += 1
+        print("ok", nombre, lic, "|", r.get("title"), flush=True)
+        time.sleep(0.5)

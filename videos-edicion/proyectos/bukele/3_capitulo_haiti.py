@@ -26,56 +26,69 @@ TITULO = "10 de noviembre de 2026: Nayib Bukele y Haití"
 INICIO = 0.8          # silencio antes de la voz (entra el rótulo)
 
 
-def ov(texto):
-    """Archivo de Openverse cuyo título contiene `texto` (para no escribir los ids a mano)."""
+def ov(texto, reserva):
+    """Fotos de Openverse cuyo título contiene `texto`; si aún no se han podido descargar,
+    se usan las fotos libres de `reserva` (ya descargadas)."""
     encontrados = sorted(k for k, v in M.CREDITOS.items() if k.startswith("ov_") and texto.lower() in
-                         (v.get("titulo") or "").lower())
-    if not encontrados:
-        raise SystemExit(f"falta descargar una imagen con «{texto}» en el título")
-    return encontrados
+                         (v.get("titulo") or "").lower() and (M.MATERIAL / k).exists())
+    return encontrados or reserva
 
 
 def F(archivo, **o):
     return dict(tipo="foto", archivo=archivo, **o)
 
 
+def DATO(cifra, texto, fondo, sub=""):
+    return dict(tipo="dato", cifra=cifra, texto=texto, fondo=fondo, sub=sub)
+
+
+SOLDADOS = ["Soldados de la FAES.jpg", "Salvadoran Army patrol in Santa Tecla, El Salvador (July 2022).jpg",
+            "Nayib Bukele and the armed forces in 2019 (E0A1211).jpg", "Soldiers in the Gerardo Barrios Plaza.png",
+            "National Civil Police patrol in Zaragoza, El Salvador (July 2022).jpg",
+            "Nayib Bukele and the armed forces in 2019 (E0A1119).jpg", "Nayib Bukele y Merino Monroy.jpg",
+            "Nayib Bukele with military officers.jpg", "Soldados de la FAES.jpg", "Nayib Bukele 2022 Independence Day Speech.jpg"]
+
+
 def plan_haiti():
-    dss = ov("DSS Response to Haiti")
-    mss = ov("MSS force")[0]
-    mapa_pandillas = ov("Gang war in Haiti")[0]
-    pap = ov("Port")
-    palacio = ov("National Palace")[0]
+    dss = ov("DSS Response to Haiti", SOLDADOS)
+    mss = ov("MSS force", ["Nayib Bukele and the armed forces in 2019 (E0A1119).jpg"])[0]
+    pap = ov("Port", ["Salvadoran Army patrol in Santa Tecla, El Salvador (July 2022).jpg"])
+    palacio = ov("National Palace", ["Palacio Nacional de El Salvador (San Salvador).jpg"])[0]
+    pandillas = ov("Gang war in Haiti", [palacio])[0]
+    g = lambda lista, k: lista[k % len(lista)]  # noqa: E731
     soldados = "Soldados de la FAES.jpg"
     return [   # (frase de transcripcion/parte5.json, toma)
         (2, dict(tipo="mapa", cual="caribe")),
-        (3, F(dss[0])),
-        (3.5, F(pap[0])),
-        (4, F("Nayib Bukele with military officers.jpg", fecha="10 de noviembre de 2026", lugar="Haití")),
-        (4.5, F(dss[1], zoom="out")),
-        (5, F(mapa_pandillas, zoom="out")),
-        (6, F(dss[2])),
+        (3, F(palacio)),
+        (3.5, F(g(dss, 1), zoom="out")),
+        (4, dict(tipo="mapa", cual="caribe", fecha="10 de noviembre de 2026", lugar="Operación anunciada por Bukele")),
+        (4.55, DATO("400 Mawozo", "una de las pandillas más poderosas de Haití", fondo=g(dss, 1),
+                    sub="Objetivo de la operación anunciada por Bukele")),
+        (5, F(pandillas, zoom="out")),
+        (6, F(g(dss, 3))),
         (7, F(soldados)),
         (7.5, F(mss)),
-        (8, F(dss[3], zoom="out")),
+        (8, F(g(dss, 4), zoom="out")),
         (9, F("Salvadoran Army patrol in Santa Tecla, El Salvador (July 2022).jpg",
               texto_grande="¿POR QUÉ ESTÁN EN HAITÍ?")),
-        (11, F(dss[4])),
-        (12, F(pap[1 % len(pap)], fecha="18 de octubre de 2026", lugar="Desaparecen cuatro técnicos salvadoreños")),
-        (14, dict(tipo="dato", cifra="+2000", texto="militares salvadoreños desplegados en Haití",
-                  fondo=soldados, sub="Según Al Jazeera, a partir de octubre de 2026")),
-        (15, F(pap[2 % len(pap)], fecha="6 de noviembre de 2026", lugar="Apoyo a los soldados salvadoreños")),
-        (16.5, F(dss[5 % len(dss)])),
-        (17, dict(tipo="mapa", cual="caribe")),
-        (18, F("Nayib Bukele saluting soldiers at his 2024 inauguration.jpg", zoom="out")),
-        (19, F(dss[6 % len(dss)])),
-        (20, F(palacio)),
-        (20.5, F(pap[3 % len(pap)], zoom="out")),
-        (21, F(dss[7 % len(dss)])),
-        (22, F(dss[8 % len(dss)], zoom="out")),
+        (11, F("Nayib Bukele with military officers.jpg")),
+        (12, DATO("4", "técnicos salvadoreños desaparecidos tras un ataque de pandillas", fondo=g(pap, 0),
+                  sub="18 de octubre de 2026")),
+        (14, DATO("+2000", "militares salvadoreños desplegados en Haití", fondo=soldados,
+                  sub="Según Al Jazeera, desde octubre de 2026")),
+        (15, DATO("6 NOV", "miles de haitianos salen a las calles para apoyar a los soldados salvadoreños",
+                  fondo=g(pap, 1), sub="Puerto Príncipe y otras ciudades · 6 de noviembre de 2026")),
+        (16.5, F(g(dss, 5))),
+        (17, F("Nayib Bukele saluting soldiers at his 2024 inauguration.jpg", zoom="out")),
+        (18, F(g(dss, 6))),
+        (19, F(g(dss, 7), zoom="out")),
+        (20, F(palacio, zoom="out")),
+        (21, F(pandillas)),
+        (22, F(g(dss, 8), zoom="out")),
         (24, F(mss, zoom="out")),
         (25, F("Inter-American Commission on Human Rights (2021).jpg")),
-        (26, F(dss[9 % len(dss)])),
-        (27, F(pap[4 % len(pap)], zoom="out")),
+        (26, F(g(dss, 9))),
+        (27, dict(tipo="mapa", cual="caribe")),
         (29, F("Nayib Bukele at Shield of the Americas (IMG 3387).jpg", zoom="out")),
     ]
 
