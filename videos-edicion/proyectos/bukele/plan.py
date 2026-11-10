@@ -67,16 +67,13 @@ def REDES(**o):
 B19 = "Nayib Bukele y Gabriela de Bukele en 2019.jpg"
 TRUMP_V = "President Donald J. Trump and President Nayib Bukele of El Salvador.webm"
 REUNION_V = "President Trump Participates in a Bilateral Meeting with the President of El Salvador (A6iphPzEGtw).webm"
-LPG_V = ("20200327 - La Prensa Gráfica - Mercado a domicilio, una alternativa para abastecerse "
-         "durante la cuarentena en El Salvador.webm")
-ONU_V = "Família é forçada a se deslocar após perseguição em El Salvador.webm"
 BANDERA_V = "El Salvador flag at the National Palace.webm"
 
 TOMAS = [
     # ------------------------------------------------------------ introducción
     (5, F("Fachadas de edificios en el Centro Histórico de San Salvador 3.JPG")),
     (5.5, F("Mara Salvatrucha Graffiti.jpg")),
-    (6, V(ONU_V, desde=20)),
+    (6, F("Mercado de Abastos de San Salvador 01.jpg", zoom="out")),
     (7, F("MS-13 tattoo 2.jpg", foco=(0.5, 0.45))),
     (7.5, F("National Civil Police of El Salvador in San Salvador Historic Downtown.jpg")),
     (8, F(B19, fecha="2019")),
@@ -195,12 +192,12 @@ TOMAS = [
     (127, F("Mara Salvatrucha MS13.jpg")),
     (127.5, F("MS-13 tattoo 2.jpg")),
     (128, F("MaraSalvatruchaLocation.png")),
-    (129, V(ONU_V, desde=60)),
+    (129, F("ov_61165018.jpg")),
     (130.5, F("MS-13 Gang Member Arrested by Border Patrol in Yuma (39712469752).jpg")),
     (131, F("Mara Salvatrucha - MS13.jpg")),
     (132, F("Mercado de Abastos de San Salvador 01.jpg")),
     (133, F("Bus stop in San Salvador 123017.jpg", zoom="out")),
-    (134, V(ONU_V, desde=110)),
+    (134, F("Fachadas de edificios en el Centro Histórico de San Salvador 2.JPG", zoom="out")),
     (135, F("National Civil Police of El Salvador in San Salvador Historic Downtown.jpg", zoom="out")),
     (136, DATO("103", "homicidios por cada 100 000 habitantes", fondo="Centro Histórico de San Salvador 20.JPG",
                sub="El Salvador, 2015 · estadísticas oficiales", fecha="2015")),
@@ -215,9 +212,9 @@ TOMAS = [
     (146, F("Nayib Bukele 2022 Independence Day Speech.jpg", zoom="out")),
     (148, F("Nayib Bukele with military officers.jpg")),
     (149, F("Castillo Policia Nacional - San Salvador.JPG")),
-    (150, V(LPG_V, desde=15, fecha="2020", lugar="Pandemia de COVID-19")),
-    (151, F("Comando Sur de EE UU realiza donativo a gobierno de El Salvador (50023367943).jpg")),
-    (152, V(LPG_V, desde=70)),
+    (150, F("Comando Sur de EE UU realiza donativo a gobierno de El Salvador (50023367943).jpg", fecha="2020", lugar="Pandemia de COVID-19")),
+    (151, F("Nayib Bukele (53255632636 f4f24ddf5e o).jpg", zoom="out")),
+    (152, F("Centro Histórico de San Salvador 19.JPG", zoom="out")),
     (153, F("Salon Azul, Legislative Assembly of El Salvador.jpg", fecha="9 de febrero de 2020",
             lugar="Asamblea Legislativa")),
     (153.5, F("Soldados de la FAES.jpg", zoom="out")),

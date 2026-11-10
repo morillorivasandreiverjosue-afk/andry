@@ -122,7 +122,7 @@ def _vineta():
 
 VINETA = _vineta()
 _rng = np.random.default_rng(7)
-GRANO = [(_rng.standard_normal((H // 2, W // 2)) * 4.0).astype(np.float32) for _ in range(6)]
+GRANO = [(_rng.standard_normal((H // 2, W // 2)) * 2.6).astype(np.float32) for _ in range(6)]
 
 
 def acabado(frame, n):
@@ -149,7 +149,7 @@ def cargar_foto(nombre):
     im = ImageOps.exif_transpose(Image.open(ruta)).convert("RGB")
     lienzo_w, lienzo_h = int(W * 1.18), int(H * 1.18)
     r = im.width / im.height
-    if r < 1.45:  # vertical o cuadrada → fondo desenfocado y foto centrada
+    if r < 1.2:  # vertical o casi cuadrada → fondo desenfocado y foto centrada
         fondo = ImageOps.fit(im, (lienzo_w // 4, lienzo_h // 4)).filter(ImageFilter.GaussianBlur(10))
         fondo = fondo.resize((lienzo_w, lienzo_h), Image.BILINEAR)
         fondo = Image.eval(fondo, lambda v: int(v * 0.35))
@@ -614,7 +614,7 @@ class Render:
 def trabajador(tl, f0, f1, ruta):
     r = Render(tl)
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "23",
            "-pix_fmt", "yuv420p", "-tune", "film", str(ruta)]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     t0 = time.time()
