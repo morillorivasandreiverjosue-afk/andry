@@ -29,9 +29,9 @@ import plan
 
 AQUI = Path(__file__).parent
 MATERIAL = AQUI / "material"
-SALIDA = AQUI / "salida"
+SALIDA = AQUI / "salida" / "corta"   # versión corta (~25 min), creada por 1b_recorte.py
 W, H, FPS = 1920, 1080, 24
-FUNDIDO = 0.6          # fundido entre tomas (discreto)
+FUNDIDO = 0.45         # fundido entre tomas
 ROJO = (214, 32, 39)
 Image.MAX_IMAGE_PIXELS = None
 
@@ -122,7 +122,7 @@ def _vineta():
 
 VINETA = _vineta()
 _rng = np.random.default_rng(7)
-GRANO = [(_rng.standard_normal((H // 2, W // 2)) * 2.6).astype(np.float32) for _ in range(6)]
+GRANO = [(_rng.standard_normal((H // 2, W // 2)) * 1.8).astype(np.float32) for _ in range(6)]
 
 
 def acabado(frame, n):
@@ -165,7 +165,8 @@ def cargar_foto(nombre):
 def ken_burns(im, u, toma):
     """Recorte animado de la foto (u de 0 a 1 a lo largo de la toma)."""
     fx, fy = toma.get("foco", (0.5, 0.45))
-    z0, z1 = (1.0, 1.12) if toma.get("zoom", "in") == "in" else (1.12, 1.0)
+    amp = 0.22 if toma.get("rapido") else 0.15
+    z0, z1 = (1.0, 1.0 + amp) if toma.get("zoom", "in") == "in" else (1.0 + amp, 1.0)
     z = z0 + (z1 - z0) * u
     cw, ch = im.width / (1.18 * z) * 1.0, im.height / (1.18 * z) * 1.0
     cw, ch = W * im.width / (W * 1.18) / z, H * im.height / (H * 1.18) / z
@@ -371,9 +372,17 @@ def cuadro_redes(u):
 # ====================================================================== rótulos
 def cuadro_capitulo(toma, u, dur):
     """Rótulo de capítulo sobre negro: "CAPÍTULO 3" + título."""
-    im = Image.new("RGB", (W, H), (6, 6, 8))
-    d = ImageDraw.Draw(im)
     t = u * dur
+    if toma.get("fondo"):
+        f = fondo_oscuro(toma["fondo"])
+        z = 1.0 + 0.06 * u
+        cw, ch = W / z, H / z
+        im = f.resize((W, H), Image.BILINEAR, box=((W - cw) / 2, (H - ch) / 2, (W + cw) / 2, (H + ch) / 2))
+        m = suave(t / 0.6) * suave((dur - t) / 0.5)
+        im = Image.blend(Image.new("RGB", (W, H), (6, 6, 8)), im, m)
+    else:
+        im = Image.new("RGB", (W, H), (6, 6, 8))
+    d = ImageDraw.Draw(im)
     a = suave(t / 0.9) * suave((dur - t) / 0.7)
     a2 = suave((t - 0.35) / 0.9) * suave((dur - t) / 0.7)
     blanco = tuple(int(240 * a2) for _ in range(3))
@@ -390,31 +399,49 @@ def cuadro_capitulo(toma, u, dur):
 
 
 def cuadro_titulo(u, dur):
-    """Apertura: NAYIB BUKELE sobre una foto oscura."""
+    """Apertura tras el avance: NAYIB BUKELE entra con un golpe sobre una foto oscura."""
     base = Image.fromarray(ken_burns(cargar_foto("Nayib Bukele 2022 Independence Day Speech.jpg"), u, {}))
-    base = Image.eval(base, lambda v: int(v * 0.45))
-    d = ImageDraw.Draw(base)
+    base = Image.eval(base, lambda v: int(v * 0.3))
+    sombra = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(sombra).rectangle([0, H / 2 - 260, W, H / 2 + 170], fill=150)
+    base = Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), base, sombra.filter(ImageFilter.GaussianBlur(70)))
     t = u * dur
-    a = suave((t - 0.3) / 1.2) * suave((dur - t) / 0.8)
-    b = suave((t - 1.2) / 1.2) * suave((dur - t) / 0.8)
-    texto_espaciado(d, (W / 2, H / 2 + 20), "NAYIB BUKELE", oswald(190, 600),
-                    tuple(int(250 * a) for _ in range(3)), 22, "ms")
-    ancho = int(500 * suave((t - 0.8) / 1.5))
-    d.rectangle([W / 2 - ancho / 2, H / 2 + 50, W / 2 + ancho / 2, H / 2 + 56],
+    a = suave(t / 0.25) * suave((dur - t) / 0.8)
+    b = suave((t - 1.0) / 1.0) * suave((dur - t) / 0.8)
+    esc = 1.0 + 0.18 * (1 - suave(t / 0.45))          # el título "cae" desde más grande
+    capa = Image.new("RGBA", (W, 400), (0, 0, 0, 0))
+    dc = ImageDraw.Draw(capa)
+    texto_espaciado(dc, (W / 2, 250), "NAYIB BUKELE", oswald(200, 600), (255, 255, 255, 255), 24, "ms")
+    if esc != 1.0:
+        capa = capa.resize((int(W * esc), int(400 * esc)), Image.BILINEAR)
+    capa.putalpha(Image.eval(capa.getchannel("A"), lambda v: int(v * a)))
+    base = base.convert("RGBA")
+    base.alpha_composite(capa, (int((W - capa.width) / 2), int(H / 2 - 230 * esc)))
+    base = base.convert("RGB")
+    d = ImageDraw.Draw(base)
+    ancho = int(560 * suave((t - 0.4) / 1.2))
+    d.rectangle([W / 2 - ancho / 2, H / 2 + 50, W / 2 + ancho / 2, H / 2 + 57],
                 fill=tuple(int(c * a) for c in ROJO))
-    d.text((W / 2, H / 2 + 92), "La historia completa del hombre que cambió El Salvador", font=mont(44, 400),
-           fill=tuple(int(225 * b) for _ in range(3)), anchor="ma")
+    d.text((W / 2, H / 2 + 95), "La historia completa del hombre que cambió El Salvador", font=mont(44, 400),
+           fill=tuple(int(230 * b) for _ in range(3)), anchor="ma")
     return np.asarray(base)
 
 
 def cuadro_final(u, dur):
+    """Cierre: sello del canal, agradecimiento e invitación a suscribirse."""
     im = Image.new("RGB", (W, H), (6, 6, 8))
     d = ImageDraw.Draw(im)
     t = u * dur
-    a = suave(t / 1.0) * suave((dur - t) / 1.2)
-    w = texto_espaciado(d, (W / 2, H / 2 + 10), "CURIOSIDADES DEL MUNDO", oswald(92, 600),
+    a = suave((t - 0.2) / 1.0) * suave((dur - t) / 1.2)
+    b = suave((t - 1.2) / 1.0) * suave((dur - t) / 1.2)
+    w = texto_espaciado(d, (W / 2, H / 2 - 10), "CURIOSIDADES DEL MUNDO", oswald(96, 600),
                         tuple(int(245 * a) for _ in range(3)), 12, "ms")
-    d.rectangle([W / 2 - w / 2, H / 2 + 34, W / 2 + w / 2, H / 2 + 42], fill=tuple(int(c * a) for c in ROJO))
+    ancho = w * suave((t - 0.3) / 1.2)
+    d.rectangle([W / 2 - ancho / 2, H / 2 + 16, W / 2 + ancho / 2, H / 2 + 24], fill=tuple(int(c * a) for c in ROJO))
+    d.text((W / 2, H / 2 + 70), "Gracias por ver", font=mont(40, 500), fill=tuple(int(225 * b) for _ in range(3)),
+           anchor="ma")
+    texto_espaciado(d, (W / 2, H / 2 + 175), "SUSCRÍBETE PARA MÁS HISTORIAS", oswald(34, 500),
+                    tuple(int(c * b) for c in ROJO), 6, "ms")
     return np.asarray(im)
 
 
@@ -465,6 +492,16 @@ def rotulo_credito(nombre):
     return im
 
 
+@lru_cache(None)
+def texto_grande(txt):
+    im = Image.new("RGBA", (W, 200), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    texto_espaciado(d, (W / 2, 120), txt, oswald(92, 600), (255, 255, 255, 255), 6, "ms")
+    sombra = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sombra.putalpha(Image.eval(im.getchannel("A").filter(ImageFilter.GaussianBlur(10)), lambda v: int(v * 0.85)))
+    return Image.alpha_composite(sombra, im)
+
+
 def pegar(frame, capa, x, y, alfa=1.0):
     if alfa <= 0:
         return frame
@@ -478,52 +515,119 @@ def pegar(frame, capa, x, y, alfa=1.0):
 
 # ====================================================================== línea de tiempo
 def construir():
+    """Línea de tiempo de la versión corta: avance, título, capítulos y final."""
     voz = json.loads((SALIDA / "voz.json").read_text())
     fr = voz["frases"]
-    total = voz["duracion"] + 4.0
+    total = voz["duracion"] + 5.0
+    nuevo = {f["orig"]: k for k, f in enumerate(fr) if not f.get("avance")}
+    avance = [f for f in fr if f.get("avance")]
 
-    def t_de(ancla):
-        i = int(ancla)
-        frac = ancla - i
-        return fr[i]["ini"] + frac * (fr[i]["fin"] - fr[i]["ini"]) - 0.25
+    def t_orig(i, frac=0.0):
+        f = fr[nuevo[i]]
+        return f["ini"] + frac * (f["fin"] - f["ini"]) - 0.25
 
-    bloques = []   # rótulos a pantalla completa (capítulos, secciones, título, final)
-    bloques.append(dict(tipo="titulo", ini=0.0, fin=fr[plan.TITULO[1]]["ini"] - 0.35))
-    for n, (i, titulo) in plan.CAPITULOS.items():
-        ini = fr[i]["ini"] - 0.55
-        bloques.append(dict(tipo="capitulo", etiqueta=f"CAPÍTULO {n}", titulo=titulo, ini=ini,
-                            fin=max(fr[i]["fin"] + 1.1, ini + 3.6)))
-    for i, (etq, titulo) in plan.SECCIONES.items():
-        fin_i = i + 1
-        ini = fr[i]["ini"] - 0.55
-        bloques.append(dict(tipo="capitulo", etiqueta=etq, titulo=titulo, ini=ini,
-                            fin=max(fr[fin_i]["fin"] + 0.9, ini + 3.6)))
+    def siguiente_orig(i):
+        return min((o for o in nuevo if o > i), default=max(nuevo))
+
+    bloques = []
+    # 1) avance: cortes rápidos dentro de cada frase, con destello y golpe al empezar cada una
+    destellos = []
+    for k, f in enumerate(avance):
+        ini = 0.0 if k == 0 else f["ini"] - 0.3
+        fin = avance[k + 1]["ini"] - 0.3 if k + 1 < len(avance) else f["fin"] + 0.5
+        fotos = plan.AVANCE[f["orig"]]
+        paso = (fin - ini) / len(fotos)
+        for m, a in enumerate(fotos):
+            bloques.append(dict(tipo="foto", archivo=a, ini=ini + m * paso, fin=ini + (m + 1) * paso,
+                                rapido=True, zoom="in" if (k + m) % 2 == 0 else "out",
+                                texto_grande="¿QUIÉN ES REALMENTE NAYIB BUKELE?" if f["orig"] == 16 else None))
+        destellos.append(ini if k else 0.25)
+    fin_avance = avance[-1]["fin"] + 0.5
+    # 2) título (golpe fuerte) hasta el rótulo de la introducción
+    i_intro = min(plan.SECCIONES)
+    bloques.append(dict(tipo="titulo", ini=fin_avance, fin=t_orig(i_intro) - 0.3))
+    destellos.append(fin_avance + 0.05)
+    # 3) rótulos de capítulo y secciones
+    for n, (i, titulo) in list(plan.CAPITULOS.items()) + [(None, (i, v)) for i, v in plan.SECCIONES.items()]:
+        if isinstance(titulo, tuple):
+            etiqueta, titulo = titulo
+        else:
+            etiqueta = f"CAPÍTULO {n}"
+        f = fr[nuevo[i]]
+        ini = f["ini"] - 0.75
+        bloques.append(dict(tipo="capitulo", etiqueta=etiqueta, titulo=titulo, ini=ini,
+                            fin=max(f["fin"] + 1.0, ini + 3.4)))
     bloques.append(dict(tipo="final", ini=fr[-1]["ini"] - 0.3, fin=total))
     bloques.sort(key=lambda b: b["ini"])
+    # fondo de cada rótulo de capítulo: la primera foto que viene después
 
-    tomas = []
+    # 4) tomas del plan; las de frases quitadas quedan de reserva para rellenar tomas largas
+    tomas, reserva = [], []
     for ancla, t in sorted(plan.TOMAS, key=lambda x: x[0]):
-        tomas.append(dict(t, ini=t_de(ancla)))
-    # las tomas no pueden empezar dentro de un rótulo: se corren al final del rótulo
+        i = int(ancla)
+        if i in nuevo:
+            tomas.append(dict(t, ini=t_orig(i, ancla - i)))
+        else:
+            reserva.append(dict(t, ini=t_orig(siguiente_orig(i)), fecha=None, lugar=None))
     for tm in tomas:
         for b in bloques:
             if b["ini"] - 0.3 <= tm["ini"] < b["fin"]:
                 tm["ini"] = b["fin"]
     tomas.sort(key=lambda x: x["ini"])
-    # cada toma dura hasta la siguiente toma o el siguiente rótulo
-    cortes = sorted([t["ini"] for t in tomas] + [b["ini"] for b in bloques] + [total])
-    lista = []
+    # quitar tomas que quedan casi encima de otra
+    limpias = []
     for tm in tomas:
-        sig = min((c for c in cortes if c > tm["ini"] + 1e-6), default=tm["ini"])
-        tm["fin"] = sig
-        if tm["fin"] - tm["ini"] >= 1.2:
-            lista.append(tm)
+        if limpias and tm["ini"] - limpias[-1]["ini"] < 1.6:
+            continue
+        limpias.append(tm)
+    tomas = limpias
+
+    def asignar_fin(tomas):
+        cortes = sorted([t["ini"] for t in tomas] + [b["ini"] for b in bloques] + [total])
+        for tm in tomas:
+            tm["fin"] = min((c for c in cortes if c > tm["ini"] + 1e-6), default=tm["ini"])
+
+    asignar_fin(tomas)
+    # 5) ritmo: ninguna foto dura más de 6,5 s; se parten con fotos de reserva cercanas
+    #    (o con la misma foto en otro encuadre si no hay)
+    MAX = 6.5
+    for _ in range(6):
+        nuevas = []
+        for tm in tomas:
+            dur = tm["fin"] - tm["ini"]
+            if (tm["tipo"] == "foto" and dur > MAX) or (tm["tipo"] in ("dato", "redes") and dur > 8.0):
+                mitad = tm["ini"] + (min(dur * 0.55, 6.5) if tm["tipo"] != "foto" else dur / 2)
+                cerca = sorted((r for r in reserva if abs(r["ini"] - mitad) < 90),
+                               key=lambda r: abs(r["ini"] - mitad))
+                if cerca:
+                    r = cerca[0]
+                    reserva.remove(r)
+                    extra = dict(r, ini=mitad)
+                elif tm["tipo"] in ("dato", "redes"):
+                    extra = dict(tipo="foto", archivo=tm.get("fondo") or "Palacio Nacional en San Salvador.JPG",
+                                 ini=mitad, zoom="out")
+                else:
+                    extra = dict(tm, ini=mitad, fecha=None, lugar=None,
+                                 zoom="out" if tm.get("zoom", "in") == "in" else "in",
+                                 foco=(0.3, 0.4) if tm.get("foco", (0.5, 0.45))[0] >= 0.5 else (0.7, 0.4))
+                nuevas.append(extra)
+        if not nuevas:
+            break
+        tomas = sorted(tomas + nuevas, key=lambda x: x["ini"])
+        asignar_fin(tomas)
+    lista = [tm for tm in tomas if tm["fin"] - tm["ini"] >= 1.2 and tm["ini"] < total]
     clips = sorted(lista + bloques, key=lambda c: c["ini"])
-    # rellenar huecos (si los hubiera) alargando el clip anterior
     for a, b in zip(clips, clips[1:]):
         if b["ini"] > a["fin"]:
             a["fin"] = b["ini"]
-    return dict(clips=clips, total=total, frases=fr)
+    # fondo desenfocado de cada rótulo de capítulo: la foto que sigue
+    for k, c in enumerate(clips):
+        if c["tipo"] == "capitulo":
+            sig = next((d for d in clips[k + 1:] if d["tipo"] == "foto"), None)
+            c["fondo"] = sig["archivo"] if sig else None
+        if c["tipo"] == "dato":
+            destellos.append(c["ini"])
+    return dict(clips=clips, total=total, frases=fr, destellos=sorted(destellos))
 
 
 # ====================================================================== render
@@ -602,11 +706,21 @@ class Render:
                     tt = t - c["ini"]
                     a = suave(tt / 0.5) * suave((c["fin"] - t) / 0.4)
                     frame = pegar(frame, cr, W - cr.width - 40, H - 46, a)
+        # texto grande del avance
+        if c.get("texto_grande"):
+            tt = t - c["ini"]
+            a = suave((tt - 0.6) / 0.5)
+            frame = pegar(frame, texto_grande(c["texto_grande"]), 0, H - 330, a)
+        # destellos (golpes de luz en el avance, el título y las cifras)
+        for d0 in self.tl.get("destellos", []):
+            if d0 <= t < d0 + 0.35:
+                k = 0.85 * math.exp(-(t - d0) / 0.09)
+                frame = (frame.astype(np.float32) * (1 - k) + 255 * k).astype(np.uint8)
         # sello del canal (siempre arriba a la derecha, salvo en el rótulo final)
         if c["tipo"] != "final":
             a = 1.0
             if c["tipo"] == "titulo":
-                a = suave((t - 1.5) / 1.0)
+                a = suave((t - c["ini"] - 1.5) / 1.0)
             frame = pegar(frame, sello(), W - 520 - 60, 38, a)
         return frame
 
@@ -614,7 +728,8 @@ class Render:
 def trabajador(tl, f0, f1, ruta):
     r = Render(tl)
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "23",
+           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-b:v", "2150k", "-maxrate", "2800k",
+           "-bufsize", "5600k",
            "-pix_fmt", "yuv420p", "-tune", "film", str(ruta)]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     t0 = time.time()
@@ -628,8 +743,8 @@ def trabajador(tl, f0, f1, ruta):
 
 
 # ====================================================================== audio
-MUSICA = {   # estado de ánimo de la música por capítulo (0 = introducción)
-    0: "misterio", 1: "triste", 2: "misterio", 3: "majestuoso", 4: "majestuoso", 5: "misterio",
+MUSICA = {   # estado de ánimo de la música por capítulo (-1 = avance, 0 = introducción)
+    -1: "tension", 0: "misterio", 1: "triste", 2: "misterio", 3: "majestuoso", 4: "majestuoso", 5: "misterio",
     6: "epico", 7: "tension", 8: "tension", 9: "frio", 10: "misterio", 11: "tension", 12: "frio",
     13: "misterio", 14: "triste", 15: "frio", 16: "majestuoso", 17: "frio", 18: "misterio",
     19: "majestuoso", 20: "misterio", 21: "triste",
@@ -644,7 +759,8 @@ def mezclar(tl):
     v = np.zeros(n, np.float32)
     v[: len(voz)] = voz[:n]
     # secciones musicales: empiezan en cada rótulo de capítulo
-    marcas = [(0.0, 0)]
+    titulo = next(c for c in tl["clips"] if c["tipo"] == "titulo")
+    marcas = [(0.0, -1), (titulo["ini"], 0)]          # -1 = avance (tensión)
     for c in tl["clips"]:
         if c["tipo"] == "capitulo":
             num = int(c["etiqueta"].split()[-1]) if c["etiqueta"].startswith("CAP") else (
@@ -666,6 +782,18 @@ def mezclar(tl):
             j = max(0, i - len(w) + int(0.2 * SR))
             musica[j: j + len(w)] += w[: n - j]
             musica[i: i + len(g)] += g[: n - i]
+    # golpes de sonido en cada destello (avance, título y cifras) y un "boom" grande en el título
+    for d0 in tl.get("destellos", []):
+        grande = abs(d0 - titulo["ini"]) < 0.3
+        g = SN.impacto() * (0.9 if grande else 0.45)
+        i = int(d0 * SR)
+        musica[i: i + len(g)] += g[: n - i]
+        if grande:
+            w = SN.whoosh(2.2) * 0.35
+            j = max(0, i - len(w))
+            musica[j: j + len(w)] += w[: n - j]
+            tb = SN.timbal(36.7) * 1.2
+            musica[i: i + len(tb)] += tb[: n - i]
     # la música baja cuando habla la voz (compresión lateral)
     env = np.abs(v)
     k = int(0.35 * SR)
@@ -717,9 +845,9 @@ def escribir_textos(tl):
     with open(SALIDA / "bukele.srt", "w") as f:
         for k, s in enumerate(fr, 1):
             f.write(f"{k}\n{srt_t(s['ini'])} --> {srt_t(s['fin'])}\n{corregir(s['texto'])}\n\n")
-    lineas = ["00:00:00 Introducción"]
+    lineas = ["00:00:00 Avance"]
     for c in tl["clips"]:
-        if c["tipo"] == "capitulo" and c["etiqueta"] != "INTRODUCCIÓN":
+        if c["tipo"] == "capitulo":
             nombre = f"Capítulo {c['etiqueta'].split()[-1]}: {c['titulo']}" if c["etiqueta"].startswith("CAP") \
                 else c["etiqueta"].capitalize() + ": " + c["titulo"]
             lineas.append(f"{hms(c['ini'] + 0.5)} {nombre}")
@@ -789,7 +917,7 @@ def main():
     ss = ["-ss", str(f0 / FPS), "-t", str((f1 - f0) / FPS)] if a.prueba else []
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(video), *ss, "-i",
                     str(SALIDA / "audio_final.wav"), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac",
-                    "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(SALIDA / nombre)], check=True)
+                    "-b:a", "160k", "-shortest", "-movflags", "+faststart", str(SALIDA / nombre)], check=True)
     for p in partes:
         p.unlink()
     print(f"Listo: {SALIDA / nombre}  ({(time.time() - t0) / 60:.1f} min)")

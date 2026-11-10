@@ -37,11 +37,33 @@ CAPITULOS = {   # número de capítulo: (frase donde empieza, título en pantall
     19: (303, "La imagen internacional de Bukele"),
     20: (314, "Bukele en 2026: ¿qué está pasando actualmente?"),
 }
-SECCIONES = {   # rótulos que no son capítulos numerados
-    3: ("INTRODUCCIÓN", "Un país, un presidente y una transformación"),
-    331: ("CONCLUSIÓN", "El legado de Nayib Bukele"),
+SECCIONES = {   # rótulos que no son capítulos numerados (la voz no dice "Introducción" ni "Conclusión")
+    4: ("INTRODUCCIÓN", "Un país, un presidente y una transformación"),
+    332: ("CONCLUSIÓN", "El legado de Nayib Bukele"),
 }
-TITULO = (0, 3)   # frases 0 a 2: título del documental
+TITULO = (0, 4)   # frases 0 a 2: título del documental
+
+# --------------------------------------------------------------- versión corta (~25 min)
+# Frases que se quitan: las palabras "Introducción" (3) y "Conclusión" (331), las frases del
+# avance que se repetirían en la introducción (13–16) y explicaciones largas o secundarias.
+QUITAR = {3, 13, 14, 15, 16, 27, 30, 34, 35, 37, 38, 39, 40, 43, 45, 46, 50, 51, 54, 57, 63, 67, 69, 77, 78, 80,
+          84, 86, 96, 97, 98, 101, 102, 109, 110, 118, 122, 133, 137, 145, 146, 147, 151, 152, 155, 156, 161,
+          165, 167, 168, 174, 176, 180, 182, 186, 189, 196, 204, 216, 219, 222, 223, 224, 228, 231, 232, 233,
+          234, 235, 236, 240, 241, 253, 262, 268, 272, 283, 285, 288, 292, 296, 299, 300, 302, 307, 308, 309,
+          313, 322, 323, 325, 326, 327, 331, 338}
+
+# Avance: las frases más fuertes, antes del título, con cortes rápidos y golpes de sonido.
+AVANCE_FRASES = [135, 203, 214, 13, 14, 15, 16]
+AVANCE = {   # frase: tomas (se reparten a lo largo de la frase)
+    135: ["Mara Salvatrucha Graffiti.jpg", "MS-13 tattoo 2.jpg", "Mara Salvatrucha - MS13.jpg"],
+    203: ["Venezuelans leaving the Terrorism Confinement Center (Medios 12).jpg", "Elementos de seguridad en CECOT.jpg"],
+    214: ["Aerial view of CECOT (2).jpg", "Venezuelans leaving the Terrorism Confinement Center (Medios 17).jpg",
+          "Venezuelans leaving the Terrorism Confinement Center (Medios 18).jpg"],
+    13: ["Plaza Gerardo Barrios Remodelada.JPG", "Supporters of Nayib Bukele's re-election (June 2023).jpg"],
+    14: ["Legislative Assembly removing Supreme Court justices.png", "Soldados de la FAES.jpg"],
+    15: ["Nayib Bukele (53255923063 6fe7d10a1b o).jpg"],
+    16: ["Presidente Nayib Bukele (cropped).jpg"],
+}
 
 
 def F(archivo, **o):
@@ -193,7 +215,7 @@ TOMAS = [
     (127.5, F("MS-13 tattoo 2.jpg")),
     (128, F("MaraSalvatruchaLocation.png")),
     (129, F("ov_61165018.jpg")),
-    (130.5, F("MS-13 Gang Member Arrested by Border Patrol in Yuma (39712469752).jpg")),
+    (130.5, F("Mara Salvatrucha - MS13.jpg", zoom="out")),
     (131, F("Mara Salvatrucha - MS13.jpg")),
     (132, F("Mercado de Abastos de San Salvador 01.jpg")),
     (133, F("Bus stop in San Salvador 123017.jpg", zoom="out")),
@@ -425,7 +447,7 @@ TOMAS = [
 
 def archivos():
     """Lista de archivos de Wikimedia Commons que usa el plan (para descargarlos)."""
-    out = set()
+    out = {a for v in AVANCE.values() for a in v}
     for _, t in TOMAS:
         for k in ("archivo", "fondo"):
             if t.get(k) and not t[k].startswith("ov_"):   # ov_ = ya bajadas de Openverse
