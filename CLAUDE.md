@@ -26,13 +26,22 @@ Proyecto de referencia (ya aprobado por el usuario): `videos-edicion/proyectos/1
   La transcripción automática a veces no detecta restos: comprobar también que haya silencio antes del título.
 - Herramientas: `transcribe.py`, `cuts.py`, `narr.py`, `verify.py` del proyecto de referencia.
 
-## 4. Audio: SIN MÚSICA
-- **Nada de música de fondo en ninguna parte del video.** Es un documental: solo la voz del narrador y
-  el sonido real del momento (aviones, impactos, explosiones, sirenas, gente, ambiente).
-- Si un video que manda el usuario trae música, quitarla. Si no se puede separar, reemplazar ese audio por sonido
-  real/ambiente sincronizado con lo que se ve (motor, impacto, etc.). No dejar música.
-- Bajo la narración, ambiente real de los videos de archivo a volumen bajo. Golpes graves (sin tonos musicales) en títulos.
+## 4. Audio y música
+- **SIEMPRE quitar la música que traigan los videos que manda el usuario** (o cualquier música ajena que aparezca).
+  De esos clips solo debe oírse el sonido real del momento (aviones, impactos, explosiones, sirenas, gente).
+  Si la música no se puede separar, reemplazar ese audio por sonido real/ambiente sincronizado con lo que se ve.
+- **Mi propia música de fondo SÍ va** (al usuario le gusta "ese sonidito"): la banda sonora cinematográfica generada
+  con `videos-edicion/proyectos/napoleon/sonido.py` (`musica()`), un ánimo por capítulo (misterio, majestuoso, tensión,
+  triste…), bajita y que se agache sola cuando habla el narrador (sidechain), golpes/whoosh en los títulos.
+  Ver `musica.py` del proyecto 11-septiembre. En los momentos de impacto real, bajar la música para que se oiga el sonido real.
+- Ambiente real de los videos de archivo a volumen bajo bajo la narración.
 - Volumen final normalizado a -14 LUFS (YouTube).
+- (En el video del 11S, la versión entregada quedó sin música porque así se pidió en ese momento; en los próximos videos
+  usar mi música de fondo como se describe arriba).
+
+## 4b. Errores que NO deben repetirse
+- Pantallas negras por error, restos de la palabra "capítulo" o del número en la voz, música dentro de los clips del usuario,
+  ícono/planeta en el logo, viñeta demasiado oscura.
 
 ## 5. Material visual
 - Usar videos e imágenes REALES de cómo pasó (archivo de dominio público o con licencia libre) + los videos que mande el usuario.
