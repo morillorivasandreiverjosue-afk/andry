@@ -208,3 +208,17 @@ def bajar_directo(titulos):
             time.sleep(min(90, 15 * (intento + 1)))
         print("ok" if ok else f"FALLO {codigos}", nombre, flush=True)
         time.sleep(1.0)
+
+
+def creditos_api(titulos):
+    """Guarda autor, licencia y página de cada archivo (solo metadatos, en lotes y despacio)."""
+    MATERIAL.mkdir(exist_ok=True)
+    cred = json.loads(CREDITOS.read_text()) if CREDITOS.exists() else {}
+    faltan = [t for t in titulos if t.split(":", 1)[-1].replace(" ", "_") not in cred]
+    for i in range(0, len(faltan), 20):
+        for f in datos(faltan[i:i + 20]):
+            nombre = f["titulo"].split(":", 1)[1].replace(" ", "_")
+            cred[nombre] = {k: f[k] for k in ("titulo", "autor", "licencia", "pagina")}
+        CREDITOS.write_text(json.dumps(cred, ensure_ascii=False, indent=1))
+        print("créditos:", len(cred), flush=True)
+        time.sleep(5)
