@@ -50,3 +50,8 @@ D=5.0; y=ciudad(D)*0.5+so.estereo(so.lp(so.ruido(so.seg(D)),150,3))*0.6
 y+=so.fuego(D,1.0)*0.5 if so.fuego(D,1.0).ndim==2 else so.estereo(so.fuego(D,1.0))*0.5
 save(so.normal(y,0.7),"ref2_fuego.wav")
 print("ok")
+# 4) reactor que se acerca durante la pantalla negra (desde 292.3 s) y termina en el golpe de 295.3 s
+D=6.0; z=np.zeros((so.seg(D),2),np.float32)
+a=avion(3.0,3.0); z[:len(a)]+=a*0.7
+save(so.normal(z,0.8),"avion_impacto.wav")
+print("avion ok")

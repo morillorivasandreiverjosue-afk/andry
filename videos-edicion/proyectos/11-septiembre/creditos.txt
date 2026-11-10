@@ -22,6 +22,5 @@ Fotos: Wikimedia Commons (dominio público y CC BY / CC BY-SA), entre ellas
 "9-11 Pentagon Emergency Response", "WTC-Fireman requests 10 more colleagues", "Ground zero",
 "Obama and Biden await updates on bin Laden", "Flight 93 National Memorial", "Tribute in Light 2016",
 "9-11 Memorial North Pool", "9-11 Memorial South Pool", "One World Trade Center".
-Videos aportados por el autor: 2 clips del 11 de septiembre (WhatsApp).
 Música y efectos: generados por código (sonido.py del proyecto Napoleón).
 Tipografías: Bebas Neue, Oswald, Inter (SIL Open Font License).
