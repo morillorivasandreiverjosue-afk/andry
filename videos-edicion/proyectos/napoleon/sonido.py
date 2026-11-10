@@ -375,16 +375,22 @@ def musica(estado, dur):
             arpegio = [freqs[1], freqs[2], freqs[4], freqs[5], freqs[4] * 2, freqs[5], freqs[4], freqs[2]]
             for j, f in enumerate(arpegio):
                 kk = seg(t + j * compas / 4)
+                if kk >= len(out):
+                    continue
                 p = estereo(piano(f), (j % 3 - 1) * 0.4)
                 out[kk: kk + len(p)] += p[: len(out) - kk]
         if e["timbales"]:
             for j in (0, 1.5) if estado == "epico" else (0,):
                 kk = seg(t + j * compas)
+                if kk >= len(out):
+                    continue
                 tb = timbal(freqs[0]) * 0.55
                 out[kk: kk + len(tb)] += tb[: len(out) - kk]
         if e.get("pulso"):
             for j in range(8):
                 kk = seg(t + j * compas / 4)
+                if kk >= len(out):
+                    continue
                 pn = seg(0.25)
                 p = np.sin(2 * np.pi * freqs[0] * np.arange(pn) / SR) * env_exp(pn, 0.08) * 0.12
                 out[kk: kk + pn, 0] += p[: len(out) - kk]
