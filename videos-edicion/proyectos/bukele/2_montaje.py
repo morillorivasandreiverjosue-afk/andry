@@ -218,6 +218,8 @@ def mapa_base(cual, marca=None):
     MW, MH = int(W * 1.5), int(H * 1.5)
     if cual == "centroamerica":
         lon0, lon1, lat0, lat1 = -95.5, -79.0, 6.0, 19.5
+    elif cual == "caribe":
+        lon0, lon1, lat0, lat1 = -97.0, -64.0, 4.5, 26.5
     else:
         lon0, lon1, lat0, lat1 = -90.6, -87.2, 12.6, 14.7
     k = math.cos(math.radians((lat0 + lat1) / 2))
@@ -240,16 +242,38 @@ def mapa_base(cual, marca=None):
         return [geom] if geom.geom_type == "Polygon" else list(geom.geoms)
 
     for _, fila in gdf.iterrows():
-        es = fila["name"] == "El Salvador"
+        es = fila["name"] == "El Salvador" or (cual == "caribe" and fila["name"] == "Haiti")
         for pol in poligonos(fila.geometry):
             pts = [px(x, y) for x, y in pol.exterior.coords]
             d.polygon(pts, fill=(150, 26, 32) if es else (48, 54, 60), outline=(95, 102, 110))
     for _, fila in gdf.iterrows():
-        if fila["name"] == "El Salvador":
+        if fila["name"] == "El Salvador" or (cual == "caribe" and fila["name"] == "Haiti"):
             for pol in poligonos(fila.geometry):
                 d.line([px(x, y) for x, y in pol.exterior.coords], fill=(240, 90, 90), width=3)
     etiquetas = {"Guatemala": (-90.4, 15.6), "Honduras": (-86.6, 14.9), "Nicaragua": (-85.2, 12.8),
                  "México": (-92.8, 17.6), "Belice": (-88.7, 17.3), "Costa Rica": (-84.2, 9.9)}
+    if cual == "caribe":
+        # trayecto San Salvador → Puerto Príncipe (arco discontinuo)
+        x0, y0 = px(-89.19, 13.69)
+        x1, y1 = px(-72.34, 18.54)
+        cxm, cym = (x0 + x1) / 2, min(y0, y1) - 260
+        pts = [((1 - q) ** 2 * x0 + 2 * (1 - q) * q * cxm + q ** 2 * x1,
+                (1 - q) ** 2 * y0 + 2 * (1 - q) * q * cym + q ** 2 * y1) for q in np.linspace(0, 1, 120)]
+        for j in range(0, len(pts) - 2, 4):
+            d.line([pts[j], pts[j + 1], pts[j + 2]], fill=(255, 255, 255), width=5)
+        for nombre, (lo, la), dx in [("San Salvador", (-89.19, 13.69), -1), ("Puerto Príncipe", (-72.34, 18.54), 1)]:
+            x, y = px(lo, la)
+            d.ellipse([x - 10, y - 10, x + 10, y + 10], fill=(255, 255, 255))
+            d.text((x + 26 * dx, y + (30 if dx > 0 else -24)), nombre, font=mont(36, 600), fill=(255, 255, 255),
+                   anchor="la" if dx > 0 else "rs")
+        texto_espaciado(d, px(-88.9, 12.6), "EL SALVADOR", oswald(40, 600), (255, 255, 255), 5, "mm")
+        texto_espaciado(d, px(-72.6, 19.9), "HAITÍ", oswald(46, 600), (255, 255, 255), 6, "mm")
+        texto_espaciado(d, px(-79.5, 13.5), "MAR CARIBE", oswald(36, 300), (70, 96, 120), 12, "mm")
+        texto_espaciado(d, px(-88.0, 9.6), "OCÉANO PACÍFICO", oswald(32, 300), (70, 96, 120), 10, "mm")
+        for nombre, (lo, la) in {"CUBA": (-79.0, 21.9), "HONDURAS": (-86.6, 14.9), "NICARAGUA": (-85.2, 12.8),
+                                 "REP. DOMINICANA": (-69.8, 19.6), "JAMAICA": (-77.3, 18.6)}.items():
+            texto_espaciado(d, px(lo, la), nombre, oswald(26, 400), (150, 156, 164), 3, "mm")
+        return im, (0.5, 0.5)
     if cual == "centroamerica":
         for nombre, (lo, la) in etiquetas.items():
             texto_espaciado(d, px(lo, la), nombre.upper(), oswald(30, 400), (150, 156, 164), 4, "mm")
@@ -278,7 +302,7 @@ def mapa_base(cual, marca=None):
 
 def cuadro_mapa(toma, u):
     im, (fx, fy) = mapa_base(toma["cual"], toma.get("marca"))
-    z = 1.0 + 0.35 * suave(u)
+    z = 1.0 + (0.12 if toma["cual"] == "caribe" else 0.35) * suave(u)
     vis_w, vis_h = im.width / 1.5 / z, im.height / 1.5 / z
     cx = im.width / 2 + (fx * im.width - im.width / 2) * suave(u) * 0.8
     cy = im.height / 2 + (fy * im.height - im.height / 2) * suave(u) * 0.8

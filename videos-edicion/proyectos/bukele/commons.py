@@ -127,15 +127,36 @@ def bajar_openverse(ids):
     cred = json.loads(CREDITOS.read_text()) if CREDITOS.exists() else {}
     for i in ids:
         nombre = f"ov_{i[:8]}.jpg"
-        req = urllib.request.Request(f"{OPENVERSE}{i}/", headers={"User-Agent": UA})
-        r = json.load(urllib.request.urlopen(req, timeout=60))
+        r = None
+        for intento in range(6):
+            try:
+                req = urllib.request.Request(f"{OPENVERSE}{i}/", headers={"User-Agent": UA})
+                r = json.load(urllib.request.urlopen(req, timeout=60))
+                break
+            except Exception as e:  # noqa: BLE001
+                print("  reintento", i[:8], e, file=sys.stderr, flush=True)
+                time.sleep(5 * (intento + 1))
+        if r is None:
+            print("FALLO", i)
+            continue
         if r["license"] not in ("cc0", "pdm", "by", "by-sa"):
             print("licencia no permitida", i, r["license"])
             continue
         dest = MATERIAL / nombre
         if not dest.exists():
-            req = urllib.request.Request(r["url"], headers={"User-Agent": UA})
-            dest.write_bytes(urllib.request.urlopen(req, timeout=120).read())
+            url = r["url"]
+            if "upload.wikimedia.org" in url and (r.get("width") or 0) > 1920:
+                url = url_directa(url.rsplit("/", 1)[1], 1920)
+            for intento in range(6):
+                res = subprocess.run(["curl", "-sS", "-L", "-f", "-A", UA, "-o", str(dest), url],
+                                     capture_output=True, text=True)
+                if res.returncode == 0:
+                    break
+                dest.unlink(missing_ok=True)
+                time.sleep(10 * (intento + 1))
+            if not dest.exists():
+                print("FALLO descarga", i)
+                continue
         lic = {"cc0": "CC0", "pdm": "Dominio público"}.get(r["license"],
                                                           f"CC {r['license'].upper()} {r.get('license_version', '')}")
         cred[nombre] = {"titulo": r.get("title"), "autor": r.get("creator"), "licencia": lic.strip(),
