@@ -917,7 +917,7 @@ def main():
     ss = ["-ss", str(f0 / FPS), "-t", str((f1 - f0) / FPS)] if a.prueba else []
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(video), *ss, "-i",
                     str(SALIDA / "audio_final.wav"), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac",
-                    "-b:a", "160k", "-shortest", "-movflags", "+faststart", str(SALIDA / nombre)], check=True)
+                    "-b:a", "96k", "-shortest", "-movflags", "+faststart", str(SALIDA / nombre)], check=True)
     for p in partes:
         p.unlink()
     print(f"Listo: {SALIDA / nombre}  ({(time.time() - t0) / 60:.1f} min)")
