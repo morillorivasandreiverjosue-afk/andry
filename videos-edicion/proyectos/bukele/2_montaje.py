@@ -858,8 +858,9 @@ def escribir_textos(tl):
     for u in usados:
         c = CREDITOS.get(u)
         if c:
-            cr.append(f"- {c.get('titulo') or u} — {c.get('autor') or 'autor desconocido'} — {c['licencia']}"
-                      f" — {c.get('pagina') or ''}")
+            titulo = (c.get("titulo") or u).replace("File:", "")
+            autor = " ".join((c.get("autor") or "autor desconocido").split())
+            cr.append(f"- {titulo} — {autor} — {c['licencia']} — {c.get('pagina') or ''}")
     cr += ["", "Fuentes Oswald y Montserrat (SIL Open Font License).",
            "Música y efectos de sonido generados por código."]
     (SALIDA / "creditos.txt").write_text("\n".join(cr) + "\n")
